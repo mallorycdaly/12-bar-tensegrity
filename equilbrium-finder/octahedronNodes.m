@@ -47,9 +47,10 @@ nMatrix = scalingFactor*[n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11;
 
 % Plot nodes
 figure
-scatter3(nMatrix(:,1),nMatrix(:,2),nMatrix(:,3),'filled')
-title('12-Bar Tensegrity Cube')
+% scatter3(nMatrix(:,1),nMatrix(:,2),nMatrix(:,3),'filled')
+title('12-Bar Tensegrity Octahedron')
 axis equal
+grid off
 
 %% Bar Positions
 % Rod length = 45 cm
