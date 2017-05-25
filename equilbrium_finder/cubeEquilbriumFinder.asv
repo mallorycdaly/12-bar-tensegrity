@@ -122,15 +122,15 @@ y = [sym('y0','real') sym('y', [1 23], 'real')]';
 z = [sym('z0','real') sym('z', [1 23], 'real')]';
 
 % % Symbolic arrays for the force densities (b = bar, c = cable)
-qb = [sym('qb0','real') sym('qb', [1 11], 'real')]'; % enforce constraint that these are >0
-qc = [sym('qc0','real') sym('qc', [1 35], 'real')]'; % enforce constraint that these are <0
-q = [qb; qc];
-q = [sym('q0','real') sym('q', [1 47], 'real')]'; % enforce constraint that these are >0
-
-% Symbolic equations
-px = conFull'*diag(conFull*x)*q;
-py = conFull'*diag(conFull*y)*q;
-pz = conFull'*diag(conFull*z)*q;
+% qb = [sym('qb0','real') sym('qb', [1 11], 'real')]'; % enforce constraint that these are >0
+% qc = [sym('qc0','real') sym('qc', [1 35], 'real')]'; % enforce constraint that these are <0
+% q = [qb; qc];
+% q = [sym('q0','real') sym('q', [1 47], 'real')]'; % enforce constraint that these are >0
+% 
+% % Symbolic equations
+% px = conFull'*diag(conFull*x)*q;
+% py = conFull'*diag(conFull*y)*q;
+% pz = conFull'*diag(conFull*z)*q;
 
 %% Initial Guess at Node Positions
 % From SW model 'C:\Users\Mallory\Google Drive\Tensegrity Research at NASA
@@ -198,8 +198,8 @@ extForce_x = zeros(24,1);
 extForce_y = zeros(24,1);
 extForce_z = zeros(24,1);
 % Only in the y direction from normal forces and gravity
-% extForce_y([1,16,5,18,9,20,13,22]+1) = weightTotal/8; % assume only vertical reaction force, distributed evenly among 8 nodes in contact with ground
-% extForce_y = extForce_y - weightPerRod/2; % gravity acts in the negative y direction; mass is distributed equally per node
+extForce_y([1,16,5,18,9,20,13,22]+1) = weightTotal/8; % assume only vertical reaction force, distributed evenly among 8 nodes in contact with ground
+extForce_y = extForce_y - weightPerRod/2; % gravity acts in the negative y direction; mass is distributed equally per node
 
 % Minimum tension in the cables (N)
 minTension = 10;
@@ -217,27 +217,15 @@ obj = (x-xExpected)'*(x-xExpected) + (y-yExpected)'*(y-yExpected) + ...
 constr = [(conFull'*diag(q)*conFull)*x == extForce_x;
           (conFull'*diag(q)*conFull)*y == extForce_y;
           (conFull'*diag(q)*conFull)*z == extForce_z];
-%            q(1:12) >= 0;
-%            q(13:48) < 0];
+%           q(1:12) >= 0;
+%           q(13:48) <= -minTension];
 % options = sdpsettings('verbose',1,'usex0',1);
 options = sdpsettings('verbose',1);
 sol = optimize(constr,obj,options);
 
-% Extract solutions
-xFound = value(x);
-yFound = value(y);
-zFound = value(z);
-qFound = value(q);
-
-%% Plot expected vs. found
+% Plot expected vs. found
 figure
-scatter3(xExpected,yExpected,zExpected,'filled','blue')
-hold on
-scatter3(xFound,yFound,zFound,'filled','red')
-legend('Expected','Found','Location','Best')
-xlabel('x')
-ylabel('y')
-zlabel('z')
+scatter3(xInit,yInit,zInit,'filled')
 title('12-Bar Tensegrity Cube')
 axis equal
 
