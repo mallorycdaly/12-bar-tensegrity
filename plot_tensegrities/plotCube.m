@@ -10,41 +10,43 @@
 % Last Updated: 2/22/17
 close all
 
-%% Scaling Factor
-% Set scaling factor to 0.1 to mimic NTRT conversion to dm
+%% Scaling Factor and Coordinate System
+% Set scaling factor to 0.1 to mimic NTRT conversion to dm, and change
+% coordinates so that y is up
 scalingFactor = 0.1;
+switchToNTRT = scalingFactor*[0 1 0; 0 0 1; 1 0 0];
 
 %% Node Positions of Rods
 % Nodes created by starting from front view and moving clockwise from
 % leftmost top node, and pairing nodes with bars
 % Rod length = 45 cm
-n0  = [-20.79 20.79 8.61];
-n1  = [-8.61 -20.79 20.79];
-n2  = [-20.79 20.79 -8.61];
-n3  = [20.79 8.61 -20.79];
-n4  = [-8.61 20.79 -20.79];
-n5  = [-20.79 -20.79 -8.61];
-n6  = [8.61 20.79 -20.79];
-n7  = [20.79 8.61 20.79];
-n8  = [20.79 20.79 -8.61];
-n9  = [8.61 -20.79 -20.79];
-n10 = [20.79 20.79 8.61];
-n11 = [-20.79 8.61 20.79];
-n12 = [8.61 20.79 20.79];
-n13 = [20.79 -20.79 8.61];
-n14 = [-8.61 20.79 20.79];
-n15 = [-20.79 8.61 -20.79];
-n16 = [-20.79 -20.79 8.61];
-n17 = [20.79 -8.61 20.79];
-n18 = [-8.61 -20.79 -20.79];
-n19 = [-20.79 -8.61 20.79];
-n20 = [20.79 -20.79 -8.61];
-n21 = [-20.79 -8.61 -20.79];
-n22 = [8.61 -20.79 20.79];
-n23 = [20.79 -8.61 -20.79];
+n0  = [-20.79 20.79 8.61]*switchToNTRT;
+n1  = [-8.61 -20.79 20.79]*switchToNTRT;
+n2  = [-20.79 20.79 -8.61]*switchToNTRT;
+n3  = [20.79 8.61 -20.79]*switchToNTRT;
+n4  = [-8.61 20.79 -20.79]*switchToNTRT;
+n5  = [-20.79 -20.79 -8.61]*switchToNTRT;
+n6  = [8.61 20.79 -20.79]*switchToNTRT;
+n7  = [20.79 8.61 20.79]*switchToNTRT;
+n8  = [20.79 20.79 -8.61]*switchToNTRT;
+n9  = [8.61 -20.79 -20.79]*switchToNTRT;
+n10 = [20.79 20.79 8.61]*switchToNTRT;
+n11 = [-20.79 8.61 20.79]*switchToNTRT;
+n12 = [8.61 20.79 20.79]*switchToNTRT;
+n13 = [20.79 -20.79 8.61]*switchToNTRT;
+n14 = [-8.61 20.79 20.79]*switchToNTRT;
+n15 = [-20.79 8.61 -20.79]*switchToNTRT;
+n16 = [-20.79 -20.79 8.61]*switchToNTRT;
+n17 = [20.79 -8.61 20.79]*switchToNTRT;
+n18 = [-8.61 -20.79 -20.79]*switchToNTRT;
+n19 = [-20.79 -8.61 20.79]*switchToNTRT;
+n20 = [20.79 -20.79 -8.61]*switchToNTRT;
+n21 = [-20.79 -8.61 -20.79]*switchToNTRT;
+n22 = [8.61 -20.79 20.79]*switchToNTRT;
+n23 = [20.79 -8.61 -20.79]*switchToNTRT;
 
-% Scale nodes by compiling as matrix and scaling matrix
-nodeRod = scalingFactor*[n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; 
+% Compile as matrix
+nodeRod = [n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; 
     n12; n13; n14; n15; n16; n17; n18; n19; n20; n21; n22; n23];
 
 % Plot nodes
@@ -58,9 +60,9 @@ ylim(viewlim)
 zlim(viewlim)
 grid on
 view(3)
-xlabel('x')
-ylabel('y')
-zlabel('z')
+xlabel('z (dm)')
+ylabel('x (dm)')
+zlabel('y (dm)')
 
 %% Rod Positions
 % Rod length = 45 cm
@@ -78,16 +80,15 @@ b10 = [n20; n21];
 b11 = [n22; n23];
 
 % Scale bars by compiling as matrix and scaling matrix
-pairRod = scalingFactor*[b0; b1; b2; b3; b4; b5; b6; b7; b8; b9; b10; b11];
+pairRod = [b0; b1; b2; b3; b4; b5; b6; b7; b8; b9; b10; b11];
 
 % Add bars to plot
 for i = 1:2:23
     hold on
     plot3(pairRod(i:i+1,1),pairRod(i:i+1,2),pairRod(i:i+1,3),'Color',[0.7 0.7 0.7],'LineWidth',3.5)
+    label = (i+1)/2-1;
+    text(sum(pairRod(i:i+1,1))/2,sum(pairRod(i:i+1,2))/2,sum(pairRod(i:i+1,3))/2,['  ' num2str(label) '  '])
 end
-xlabel('x (dm)')
-ylabel('y (dm)')
-zlabel('z (dm)')
 
 %% Cable Positions
 % Cables designed in SW model to be approximately equal length
@@ -129,7 +130,7 @@ c34	= [n20; n13];
 c35	= [n16; n5];
 
 % Scale cables by compiling as matrix and scaling matrix
-pairStructureCable = scalingFactor*[c0; c1; c2; c3; c4; c5; c6; c7; c8; c9; c10;
+pairStructureCable = [c0; c1; c2; c3; c4; c5; c6; c7; c8; c9; c10;
     c11; c12; c13; c14; c15; c16; c17; c18; c19; c20; c21; c22; c23; c24;
     c25; c26; c27; c28; c29; c30; c31; c32; c33; c34; c35];
 
@@ -209,3 +210,29 @@ for i = 1:2:(size(pairPayloadCable,1)-1)
     hold on
     plot3(pairPayloadCable(i:i+1,1),pairPayloadCable(i:i+1,2),pairPayloadCable(i:i+1,3),'r','LineWidth',1)
 end
+
+%% Find locations for actuation modules in NTRT
+bar0_direction = (n1-n0)/norm(n1-n0);
+bar4_direction = (n9-n8)/norm(n9-n8);
+bar5_direction = (n11-n10)/norm(n11-n10);
+bar10_direction = (n21-n20)/norm(n21-n20);
+
+module0_start = n0 + 1.5*bar0_direction;
+module0_end = n0 + 3*bar0_direction;
+module4_start = n8 + 1.5*bar4_direction;
+module4_end = n8 + 3*bar4_direction;
+module5_start = n10 + 1.5*bar5_direction;
+module5_end = n10 + 3*bar5_direction;
+module10_start = n20 + 1.5*bar10_direction;
+module10_end = n20 + 3*bar10_direction;
+
+Modules = [module0_start; module0_end;
+           module4_start; module4_end;
+           module5_start; module5_end;
+           module10_start; module10_end];
+       
+returnToEntered = inv([0 1 0; 0 0 1; 1 0 0]);       
+Modules*returnToEntered
+
+hold on
+scatter3(Modules(:,1),Modules(:,2),Modules(:,3))
