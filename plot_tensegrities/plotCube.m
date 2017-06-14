@@ -235,4 +235,4 @@ returnToEntered = inv([0 1 0; 0 0 1; 1 0 0]);
 Modules*returnToEntered
 
 hold on
-scatter3(Modules(:,1),Modules(:,2),Modules(:,3))
+scatter3(Modules(:,1),Modules(:,2),Modules(:,3),'filled')
