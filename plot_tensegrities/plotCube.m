@@ -208,7 +208,8 @@ pairPayloadCable = [nodePayload(1,:); nodeRodCenter(9,:);
 % Add cables to plot
 for i = 1:2:(size(pairPayloadCable,1)-1)
     hold on
-    plot3(pairPayloadCable(i:i+1,1),pairPayloadCable(i:i+1,2),pairPayloadCable(i:i+1,3),'r','LineWidth',1)
+    plot3(pairPayloadCable(i:i+1,1),pairPayloadCable(i:i+1,2),...
+        pairPayloadCable(i:i+1,3),'r','LineWidth',1)
 end
 
 %% Find locations for actuation modules in NTRT
@@ -217,14 +218,19 @@ bar4_direction = (n9-n8)/norm(n9-n8);
 bar5_direction = (n11-n10)/norm(n11-n10);
 bar10_direction = (n21-n20)/norm(n21-n20);
 
-module0_start = n0 + 1.5*bar0_direction;
-module0_end = n0 + 3*bar0_direction;
-module4_start = n8 + 1.5*bar4_direction;
-module4_end = n8 + 3*bar4_direction;
-module5_start = n10 + 1.5*bar5_direction;
-module5_end = n10 + 3*bar5_direction;
-module10_start = n20 + 1.5*bar10_direction;
-module10_end = n20 + 3*bar10_direction;
+box_mid = 4.5/2;
+box_length = 1;
+box_start = box_mid - box_length/2;
+box_end = box_mid + box_length/2;
+
+module0_start = n0 + box_start*bar0_direction;
+module0_end = n0 + box_end*bar0_direction;
+module4_start = n8 + box_start*bar4_direction;
+module4_end = n8 + box_end*bar4_direction;
+module5_start = n10 + box_start*bar5_direction;
+module5_end = n10 + box_end*bar5_direction;
+module10_start = n20 + box_start*bar10_direction;
+module10_end = n20 + box_end*bar10_direction;
 
 Modules = [module0_start; module0_end;
            module4_start; module4_end;
@@ -232,7 +238,13 @@ Modules = [module0_start; module0_end;
            module10_start; module10_end];
        
 returnToEntered = inv([0 1 0; 0 0 1; 1 0 0]);       
-Modules*returnToEntered
+Modules_for_NTRT = Modules*returnToEntered;
+
+for i = 1:size(Modules_for_NTRT,1)
+    disp(['n' num2str(i+35) ': [' num2str(Modules_for_NTRT(i,1)) ...
+        ', ' num2str(Modules_for_NTRT(i,2)) ', ' ...
+        num2str(Modules_for_NTRT(i,3)) ']'])
+end
 
 hold on
 scatter3(Modules(:,1),Modules(:,2),Modules(:,3),'filled')
