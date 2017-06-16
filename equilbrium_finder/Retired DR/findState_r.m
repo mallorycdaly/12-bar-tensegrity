@@ -1,4 +1,4 @@
-function q = findState(r, rod_pairs)
+function q = findState_r(r, rod_pairs)
 % This function finds the state vector of each rod given the nodal
 % positions. Based on the coordinate system in Fig. 4 of Kyunam Kim's
 % "Robust Learning of Tensegrity Robot Control for Locomotion through
@@ -16,7 +16,7 @@ function q = findState(r, rod_pairs)
 % This should be general to any tensegrity, but I haven't tested on
 % anything but a three-strut.
 
-% Grab number of nodes and number of rods
+% Grab number of nodes and rods
 num_nodes = size(r,1);
 num_rods = num_nodes/2;
 
@@ -25,12 +25,12 @@ num_rods = num_nodes/2;
 % Even nodes: higher value of z
 r_rod = zeros(size(r));
 for i = 1:num_rods
-    if (r(rod_pairs(i,1),3) > r(rod_pairs(i,2),3))
-        r_rod(2*i-1:2*i,:) = [r(rod_pairs(i,2),:)
-            r(rod_pairs(i,1),:)];
-    else
+    if (r(rod_pairs(i,1),3) < r(rod_pairs(i,2),3))
         r_rod(2*i-1:2*i,:) = [r(rod_pairs(i,1),:)
             r(rod_pairs(i,2),:)];
+    else
+        r_rod(2*i-1:2*i,:) = [r(rod_pairs(i,2),:)
+            r(rod_pairs(i,1),:)];
     end
 end
 
