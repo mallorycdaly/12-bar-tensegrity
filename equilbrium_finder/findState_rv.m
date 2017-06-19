@@ -1,4 +1,4 @@
-function [q, q_dot] = findState_rv(r, r_dot, rod_pairs)
+function [q, q_dot] = findState_rv(r, v, rod_pairs)
 % This function finds the derivative of the state vector of each rod given
 % the nodal positions. Based on the coordinate system in Fig. 4 of Kyunam
 % Kim's "Robust Learning of Tensegrity Robot Control for Locomotion through
@@ -6,7 +6,7 @@ function [q, q_dot] = findState_rv(r, r_dot, rod_pairs)
 %
 % The inputs are the following:
 %   r: matrix of x,y,z, position of nodes
-%   r_dot: matrix of x,y,z velocities of nodes
+%   v: matrix of x,y,z velocities of nodes
 %   rod_pairs: each row defines the node indices corresponding to that rod
 %
 % The outputs are the following:
@@ -40,10 +40,10 @@ for i = 1:num_rods
     end
 end
 
-% Reorder r_dot to match order of r_rod
-r_dot_rod = zeros(size(r));
+% Reorder v to match order of r_rod
+v_rod = zeros(size(r));
 for i = 1:num_nodes
-    r_dot_rod(i,:) = r_dot(rod_pairs_ordered(i),:);
+    v_rod(i,:) = v(rod_pairs_ordered(i),:);
 end
 
 % Find length of rod
@@ -71,10 +71,10 @@ for i = 1:num_rods
     theta(i) = atan2d(del_y,del_x);
     
     % Extract x_dot and z_dot at each node to make things easier
-    x_dot_i = r_dot_rod(2*i-1,1);
-    x_dot_k = r_dot_rod(2*i,1);
-    z_dot_i = r_dot_rod(2*i-1,3);
-    z_dot_k = r_dot_rod(2*i,3);
+    x_dot_i = v_rod(2*i-1,1);
+    x_dot_k = v_rod(2*i,1);
+    z_dot_i = v_rod(2*i-1,3);
+    z_dot_k = v_rod(2*i,3);
     
     % Find phi_dot, and check for singularity
     if sind(phi(i)) == 0
@@ -94,7 +94,7 @@ for i = 1:num_rods
     
 end
 q = [r_rod(1:2:num_nodes,:) phi theta];
-q_dot = [r_dot_rod(1:2:num_nodes,:) phi_dot theta_dot];
+q_dot = [v_rod(1:2:num_nodes,:) phi_dot theta_dot];
 
 %% Check for errors
 error_tol = 1e-6;
@@ -115,11 +115,11 @@ if (any(any(r_rod - r_rod_refind > error_tol)))
         'reconstructed nodal positions based on the calculated angles.'])
 end
 
-% Refind r_dot_rod based on q_dot to check
-r_dot_rod_refind = zeros(size(r_rod));
+% Refind v_rod based on q_dot to check
+v_rod_refind = zeros(size(r_rod));
 for i = 1:num_rods
-    r_dot_rod_refind(2*i-1,:) = r_dot_rod(2*i-1,:);
-    r_dot_rod_refind(2*i,:) = r_dot_rod(2*i-1,:) + ...
+    v_rod_refind(2*i-1,:) = v_rod(2*i-1,:);
+    v_rod_refind(2*i,:) = v_rod(2*i-1,:) + ...
         L*[phi_dot(i)*cosd(phi(i))*cosd(theta(i)) - ...
                theta_dot(i)*sind(phi(i))*sind(theta(i)) ...
            phi_dot(i)*cosd(phi(i))*sind(theta(i)) - ...
@@ -128,7 +128,7 @@ for i = 1:num_rods
 end
 
 % Compare and throw error if there is mismatch
-if (any(any(r_dot_rod - r_dot_rod_refind > error_tol)))
+if (any(any(v_rod - v_rod_refind > error_tol)))
     error(['There is a mismatch between the nodal velocities and the ' ...
         'reconstructed nodal velocities based on the calculated angles.'])
 end

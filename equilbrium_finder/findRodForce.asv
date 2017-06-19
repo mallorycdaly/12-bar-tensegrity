@@ -1,13 +1,11 @@
-function F_rod = findRodForce(r, rod_pairs, spring_constant, ...
-    original_rod_length)
+function F_rod = findRodForce(r, rod_pairs, q, q_dot, spring_constant)
 % This function calculates the rod forces on each node. The rod can be
-% thought of as a very stiff spring. The force is calculated as
-%   F = -spring_constant * (rod_length - original_rod_length)
+% thought off as a very stiff spring.
 % 
 % The inputs are the following:
 %   r: matrix of x,y,z, position of nodes
 %   rod_pairs: each row defines the node indices corresponding to that rod
-%   spring_constant: spring constant of the rod (could be found as EA/L)
+%   spring_constant: 
 %
 % The outputs are the following:
 %   F_rod: each row defines the force vector (x,y,z) acting on the node
@@ -30,15 +28,25 @@ for i = 1:num_rods
         node_i = rod_pairs(i,2);
         node_k = rod_pairs(i,1);
     end
-    
-    % Calculate rod length and direction along rod
+
+    % Extract needed values
+    x_dotdot = q_dotdot(i,1);
+    y_dotdot = q_dotdot(i,2);
+    z_dotdot = q_dotdot(i,3);
+    phi = q(i,4);
+    theta = q(i,5);
+    phi_dot = q_dot(i,4);
+    theta_dot = q_dot(i,5);
+
+    % Find rod's force magnitude
     rod_length = norm(r(node_k,:) - r(node_i,:));     
     e_R = (r(node_k,:) - r(node_i,:)) / rod_length;
+    F_ik = mass*(x_dotdot*sind(phi)*cosd(theta) + ...
+        y_dotdot*sind(phi)*sind(theta) + z_dotdot*cosd(phi) - ...
+        rod_length*phi_dot^2 - rod_length*theta_dot^2*sind(phi)^2) - ...
+        F_cable(node_k,:)*e_R';
     
-    % Calculate rod force magnitude
-    F_ik = spring_constant*(rod_length - original_rod_length);
-    
-    % Assign force values
+    % Assign force to each node of rod
     F_rod(node_i,:) = -F_ik*e_R;
     F_rod(node_k,:) = F_ik*e_R;
     

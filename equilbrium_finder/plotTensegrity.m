@@ -7,7 +7,7 @@ function plotTensegrity(nodes, cable_pairs, bar_pairs, labels_on)
 %   labels_on: boolean to add labels of bars and cables to plot
 
 % Plot nodes
-scatter3(nodes(:,1),nodes(:,2),nodes(:,3),'k')
+scatter3(nodes(:,1),nodes(:,2),nodes(:,3),'k','filled')
 axis equal
 xlabel('x')
 ylabel('y')
@@ -23,7 +23,7 @@ for i = 1:num_cables
     cable_x = [nodes(cable_pairs(i,1),1); nodes(cable_pairs(i,2),1)];
     cable_y = [nodes(cable_pairs(i,1),2); nodes(cable_pairs(i,2),2)];
     cable_z = [nodes(cable_pairs(i,1),3); nodes(cable_pairs(i,2),3)];
-    plot3(cable_x,cable_y,cable_z,'k','LineWidth',1.5)
+    plot3(cable_x,cable_y,cable_z,'b','LineWidth',1.5)
     if labels_on == 1
         text(sum(cable_x)/2,sum(cable_y)/2,sum(cable_z)/2,['  ' num2str(i) '  '])
     end
