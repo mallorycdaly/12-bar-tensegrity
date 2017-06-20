@@ -1,25 +1,25 @@
-function [F_rod, rod_length] = findRodForce(r, rod_pair, num_nodes, ...
-    num_rods, spring_constant, original_rod_length)
+function [F_rod, L_rod] = findRodForce(r, rod_pair, num_nodes, ...
+    num_rods, k_rod, L0_rod)
 % This function calculates the rod forces on each node. The rod can be
 % thought of as a very stiff spring. The force magnitude is calculated as
 % F = k*(L-L0).
 % 
-% The inputs are the following:
+% The inputs are the following: 
 %   r: matrix of x,y,z, position of nodes
 %   rod_pair: each row defines the node indices corresponding to that rod
 %   num_nodes: number of nodes
 %   num_rods: number of rods
-%   spring_constant: spring constant of the rod (could be found as EA/L)
-%   original_rod_length: length of rods before deformation
+%   k_rod: spring constant of the rod (could be found as EA/L)
+%   L0_rod: length of rods before deformation
 %
 % The outputs are the following:
 %   F_rod: each row defines the force vector (x,y,z) acting on the node
 %       from the rod
-%   rod_length: each row defines the rod's length
+%   L_rod: each row defines the rod's length
 
 % Initialize variables
 F_rod = zeros(num_nodes,3);
-rod_length = zeros(num_rods,1);
+L_rod = zeros(num_rods,1);
 
 for i = 1:num_rods
     
@@ -33,11 +33,11 @@ for i = 1:num_rods
     end
     
     % Calculate rod length and direction along rod
-    rod_length(i) = norm(r(node_k,:) - r(node_i,:));     
-    e_R = (r(node_k,:) - r(node_i,:)) / rod_length(i);
+    L_rod(i) = norm(r(node_k,:) - r(node_i,:));     
+    e_R = (r(node_k,:) - r(node_i,:)) / L_rod(i);
     
     % Calculate rod force magnitude
-    F_ik = spring_constant*(rod_length(i) - original_rod_length);
+    F_ik = k_rod*(L_rod(i) - L0_rod);
     
     % Assign force values
     F_rod(node_i,:) = F_ik*e_R;
