@@ -1,5 +1,5 @@
-function [r, cable_pairs, rod_pairs] = formThreeBar(edge_length, ...
-    height, rotation_angle)
+function [r, cable_pairs, rod_pairs, num_nodes, num_cables, num_rods] = ...
+    formThreeBar(edge_length, height, rotation_angle)
 % This function forms a three strut tensegrity prism using the numbering
 % scheme in Fig. 10. of "Review of Form-Finding Methods for Tensegrity
 % Structures" by A. Tibert.
@@ -8,6 +8,9 @@ function [r, cable_pairs, rod_pairs] = formThreeBar(edge_length, ...
 %   edge_length: the edge length of the top and bottom triangles
 %   height: the distance between the top and bottom triangles
 %   rotation_angle: the rotation angle between the top and bottom triangles
+%   num_nodes: number of nodes
+%   num_cables: number of cables
+%   num_rods: number of rods
 %
 % The outputs are the following:
 %   r: matrix of x,y,z, position of nodes based on design parameters
@@ -48,3 +51,8 @@ cable_pairs = [1 2;     % cable 1
 rod_pairs   = [1 6;     % bar 10
                2 4;     % bar 11
                3 5];    % bar 12
+
+% Find number of nodes, cables, and rods           
+num_nodes = size(r,1);
+num_cables = size(cable_pairs,1);
+num_rods = size(rod_pairs,1);           
