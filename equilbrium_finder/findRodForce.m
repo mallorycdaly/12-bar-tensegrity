@@ -1,8 +1,8 @@
 function [F_rod, rod_length] = findRodForce(r, rod_pair, num_nodes, ...
     num_rods, spring_constant, original_rod_length)
 % This function calculates the rod forces on each node. The rod can be
-% thought of as a very stiff spring. The force is calculated as
-%   F = -spring_constant * (rod_length - original_rod_length)
+% thought of as a very stiff spring. The force magnitude is calculated as
+% F = k*(L-L0).
 % 
 % The inputs are the following:
 %   r: matrix of x,y,z, position of nodes
