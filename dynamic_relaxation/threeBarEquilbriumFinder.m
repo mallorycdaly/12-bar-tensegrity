@@ -3,23 +3,23 @@
 % on desired rest lengths. Dynamic relaxation is used to iteratively reach
 % the equilbrium configuration from the initial position.
 %
+% This version of dynamic relaxation models the rods as stiff springs. 
+%
 % Author: Mallory Daly
 % Affiliation: University of California, Berkeley
 %              Mechanical Engineering Department
 %              NASA Space Technology Research Fellow
 % Last Updated: June 21, 2017
-% 
-% TO DO:
-% Add check that rods don't intersect
-% Check with units that results are realistic
+
 clear; close all
 
-%% User Edited Design Parameters
+%% Design Parameters
 
 % Three-bar tensegrity geometry
 edge_length = 1;        % edge length of the top and bottom triangles
 height = 1;             % distance between top and bottom
 rotation_angle = 45;    % degrees, between top and bottom
+rod_radius = 0.1;       % used to check for intersection
 [r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
     L0_rod] = formThreeBar(edge_length, height, rotation_angle);
 
@@ -30,7 +30,17 @@ k_spring = 200;                     % spring constant of the springs
 L0_spring = zeros(num_cables,1);    % initial length of the springs
 
 % Desired rest lengths: The length of the string in series with the spring
-rest_length = rand(num_cables,1).*L0_cable;
+% rest_length = rand(num_cables,1).*L0_cable;
+rest_length = ...
+   [0.9649;
+    0.1576;
+    0.9706;
+    1.0465;
+    0.5307;
+    0.8749;
+    0.1419;
+    0.4218;
+    0.9157];
 
 % Simulation variables
 sim_step = 1e3;     % length of simulation
@@ -39,7 +49,7 @@ del_t = 1e-2;       % time
 % Plotting format
 style_initial = 'b';        % formats plot style of initial tensegrity
 style_equilbrium = 'r';     % formats plot style of equilbrium tensegrity
-labels_on = 0;              % adds labels of node, cable, and rod numbers
+labels_on = 1;              % adds labels of node, cable, and rod numbers
 
 %% Dynamic relaxation
 
@@ -55,6 +65,7 @@ F_cable = zeros(num_nodes,3,sim_step);  % cable force at nodes
 F_rod = zeros(num_nodes,3,sim_step);    % rod force at nodes
 F_total = zeros(num_nodes,3,sim_step);  % total force at nodes
 L_rod = zeros(num_rods,1,sim_step+1);   % rod length
+intersect_found = zeros(sim_step,1);    % boolean for rod intersection
 
 % Run dynamic relaxation
 for i = 1:sim_step
@@ -93,11 +104,20 @@ for i = 1:sim_step
     % Update position
     r(:,:,i+1) = r(:,:,i) + v(:,:,i+1)*del_t;
     
+    % Check for rod intersection
+    intersect_found(i) = checkRodIntersection(r(:,:,i+1), rod_pair, ...
+        num_rods, rod_radius);
+    
 end
 
 % Store updated rod length
 L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
     r(rod_pair(1,2),:,end));
+
+% Throw warning if a rod intersection was found.
+if any(intersect_found) == 1
+    warning('Rod intersection was found during the simulation.')
+end
 
 %% Output results
 % F_total_end = F_total(:,:,end)
