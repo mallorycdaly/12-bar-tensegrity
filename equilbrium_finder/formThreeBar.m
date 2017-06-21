@@ -1,5 +1,5 @@
-function [r, cable_pairs, rod_pairs, num_nodes, num_cables, num_rods] = ...
-    formThreeBar(edge_length, height, rotation_angle)
+function [r, cable_pair, rod_pair, num_nodes, num_cables, num_rods, ...
+    L_cable, L_rod] = formThreeBar(edge_length, height, rotation_angle)
 % This function forms a three strut tensegrity prism using the numbering
 % scheme in Fig. 10. of "Review of Form-Finding Methods for Tensegrity
 % Structures" by A. Tibert.
@@ -8,15 +8,18 @@ function [r, cable_pairs, rod_pairs, num_nodes, num_cables, num_rods] = ...
 %   edge_length: the edge length of the top and bottom triangles
 %   height: the distance between the top and bottom triangles
 %   rotation_angle: the rotation angle between the top and bottom triangles
-%   num_nodes: number of nodes
-%   num_cables: number of cables
-%   num_rods: number of rods
+
 %
 % The outputs are the following:
 %   r: matrix of x,y,z, position of nodes based on design parameters
-%   cable_pairs: each row defines the node indices corresponding to that
+%   cable_pair: each row defines the node indices corresponding to that
 %     cable
-%   rod_pairs: each row defines the node indices corresponding to that rod
+%   rod_pair: each row defines the node indices corresponding to that rod
+%   num_nodes: number of nodes
+%   num_cables: number of cables
+%   num_rods: number of rods
+%   L_cable: lengths of the cables (node-to-node distance)
+%   L_rod: lengths of the rods
 
 % Base triangle centered at (0,0,0)
 node4 = [edge_length/2 -sqrt(3)/6*edge_length 0];
@@ -37,7 +40,7 @@ node3 = node6*rotM + [0 0 height];
 r = [node1; node2; node3; node4; node5; node6];
 
 % Cables by pairs of node indices
-cable_pairs = [1 2;     % cable 1
+cable_pair = [1 2;     % cable 1
                2 3;     % cable 2
                1 3;     % cable 3
                1 4;     % cable 4
@@ -48,11 +51,19 @@ cable_pairs = [1 2;     % cable 1
                4 6];    % cable 9
            
 % Rods by pairs of node indices           
-rod_pairs   = [1 6;     % bar 10
+rod_pair   = [1 6;     % bar 10
                2 4;     % bar 11
                3 5];    % bar 12
 
 % Find number of nodes, cables, and rods           
 num_nodes = size(r,1);
-num_cables = size(cable_pairs,1);
-num_rods = size(rod_pairs,1);           
+num_cables = size(cable_pair,1);
+num_rods = size(rod_pair,1);
+
+% Original cable and rod lengths, before any deformation
+L_cable = zeros(num_cables,1);
+for i = 1: num_cables
+    L_cable(i) = norm(r(cable_pair(i,1),:) - ...
+        r(cable_pair(i,2),:));
+end
+L_rod = norm(r(rod_pair(1,1),:) - r(rod_pair(1,2),:));

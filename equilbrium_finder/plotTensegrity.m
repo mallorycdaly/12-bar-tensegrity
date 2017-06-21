@@ -27,6 +27,7 @@ axis equal
 xlabel('x')
 ylabel('y')
 zlabel('z')
+view(45,15)
 
 % Plot cables
 for i = 1:num_cables
