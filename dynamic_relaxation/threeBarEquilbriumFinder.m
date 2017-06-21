@@ -12,11 +12,9 @@
 % TO DO:
 % Add check that rods don't intersect
 % Check with units that results are realistic
-
 clear; close all
 
 %% User Edited Design Parameters
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Three-bar tensegrity geometry
 edge_length = 1;        % edge length of the top and bottom triangles
@@ -24,10 +22,6 @@ height = 1;             % distance between top and bottom
 rotation_angle = 45;    % degrees, between top and bottom
 [r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
     L0_rod] = formThreeBar(edge_length, height, rotation_angle);
-
-% Simulation variables
-sim_step = 1e3;     % length of simulation
-del_t = 1e-2;       % time 
 
 % Mass and spring constants
 m = 10;                             % mass per node
@@ -38,12 +32,14 @@ L0_spring = zeros(num_cables,1);    % initial length of the springs
 % Desired rest lengths: The length of the string in series with the spring
 rest_length = rand(num_cables,1).*L0_cable;
 
+% Simulation variables
+sim_step = 1e3;     % length of simulation
+del_t = 1e-2;       % time
+
 % Plotting format
 style_initial = 'b';        % formats plot style of initial tensegrity
 style_equilbrium = 'r';     % formats plot style of equilbrium tensegrity
 labels_on = 0;              % adds labels of node, cable, and rod numbers
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Dynamic relaxation
 
