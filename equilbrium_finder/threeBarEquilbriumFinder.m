@@ -1,125 +1,138 @@
-%% Test optimization-based equilbrium finder using three strut prism
+%% Equilbrium Finder for Three Bar Tensegrity
+% This script finds the equilbrium position of a three bar tensegrity based
+% on desired rest lengths. Dynamic relaxation is used to iteratively reach
+% the equilbrium configuration from the initial position.
+%
+% Author: Mallory Daly
+% Affiliation: University of California, Berkeley
+%              Mechanical Engineering Department
+%              NASA Space Technology Research Fellow
+% Last Updated: June 21, 2017
+% 
+% TO DO:
+% Add check that rods don't intersect
+% Check with units that results are realistic
+
 clear; close all
 
-%% Set up three-strut prism tensegrity
-% Using prism numbering scheme from Fig. 10 of Review of Form-Finding
-% Methods for Tensegrity Structures by A. Tibert.
+%% User Edited Design Parameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Assign design parameters
-edge_length = 1;
-height = 1;
-rotation_angle = -25;  % degrees
+% Three-bar tensegrity geometry
+edge_length = 1;        % edge length of the top and bottom triangles
+height = 1;             % distance between top and bottom
+rotation_angle = 45;    % degrees, between top and bottom
+[r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
+    L0_rod] = formThreeBar(edge_length, height, rotation_angle);
 
-% Find initial position of nodes (r0) and indices corresponding to cables
-% (cable_pairs) and rods (rod_pairs)
-[r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods] = ...
-    formThreeBar(edge_length, height, rotation_angle);
+% Simulation variables
+sim_step = 1e3;     % length of simulation
+del_t = 1e-2;       % time 
 
-% Original lengths, before any deformation
-original_cable_length = zeros(num_cables,1);
-for i = 1: num_cables
-    original_cable_length(i) = norm(r0(cable_pair(i,1),:) - ...
-        r0(cable_pair(i,2),:));
-end
-original_rod_length = norm(r0(rod_pair(1,1),:) - r0(rod_pair(1,2),:));
+% Mass and spring constants
+m = 10;                             % mass per node
+k_rod = 10000;                      % spring constant of the rods
+k_spring = 200;                     % spring constant of the springs
+L0_spring = zeros(num_cables,1);    % initial length of the springs
 
-%% Plot original tensegrity
-% figure
-% labels_on = 1;
-% plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-%     num_rods, labels_on)
-% addCoordinateSystemToPlot()
+% Desired rest lengths: The length of the string in series with the spring
+rest_length = rand(num_cables,1).*L0_cable;
 
-%% Set up dynamic relaxation
+% Plotting format
+style_initial = 'b';        % formats plot style of initial tensegrity
+style_equilbrium = 'r';     % formats plot style of equilbrium tensegrity
+labels_on = 0;              % adds labels of node, cable, and rod numbers
 
-% Set simulation variables
-sim_step = 1e5;
-del_t = 1e-2;
-
-% Initialize variables
-% Note: Because of MATLAB's indexing, t=0 is index 1
-r = zeros(num_nodes,3,sim_step+1);  % increments of del_t starting at 0
-r(:,:,1) = r0;
-v = zeros(num_nodes,3,sim_step);  % increments of del_t starting at del_t/2
-KE = zeros(sim_step,1);
-F_cable = zeros(num_nodes,3,sim_step);
-F_rod = zeros(num_nodes,3,sim_step);
-F_total = zeros(num_nodes,3,sim_step);
-rod_length = zeros(num_rods,1,sim_step+1);
-
-% Set mass and spring constants
-m = 10000;      % mass per node
-k_cable = 1;    % spring constant of the cables
-k_rod = 1000;   % spring constant of the rods
-
-% Set desired rest lengths
-% rest_length = rand(num_cables,1).*original_cable_length;
-rest_length = 0.9*original_cable_length;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Dynamic relaxation
 
+% Initialize variables
+% Note: All variables except velocity are incremented by del_t starting
+% from t = 0 (index 1 in MATLAB). Velocity is incremented by del_t starting
+% from t = -del_t/2 (index 1).
+r = zeros(num_nodes,3,sim_step+1);      % nodal positions
+r(:,:,1) = r0;                          % initial nodal positions are known
+v = zeros(num_nodes,3,sim_step+1);    	% nodal velocities
+KE = zeros(sim_step,1);                 % kinetic energy
+F_cable = zeros(num_nodes,3,sim_step);  % cable force at nodes
+F_rod = zeros(num_nodes,3,sim_step);    % rod force at nodes
+F_total = zeros(num_nodes,3,sim_step);  % total force at nodes
+L_rod = zeros(num_rods,1,sim_step+1);   % rod length
+
+% Run dynamic relaxation
 for i = 1:sim_step
 
     % Find forces acting on each node
     F_cable(:,:,i) = findCableForce(r(:,:,i), cable_pair, num_nodes, ...
-        k_cable, rest_length);
-    [F_rod(:,:,i),rod_length(:,:,i)] = findRodForce(r(:,:,i), rod_pair, ...
-        num_nodes, num_rods, k_rod, original_rod_length);
+        k_spring, L0_spring, rest_length);
+    [F_rod(:,:,i),L_rod(:,:,i)] = findRodForce(r(:,:,i), rod_pair, ...
+        num_nodes, num_rods, k_rod, L0_rod);
     F_total(:,:,i) = F_cable(:,:,i) + F_rod(:,:,i);
     
     % Find velocity at t + del_t/2, and velocity centered at t using
     % average of t+del_t/2 and t-del_t/2
-    if i > 1
-        v(:,:,i) = v(:,:,i-1) + del_t/m*F_total(:,:,i);
-        v_center = (v(:,:,i) + v(:,:,i-1)) / 2;
+    v(:,:,i+1) = v(:,:,i) + F_total(:,:,i)/(m/del_t);
+    if i == 1
+        v_center = zeros(size(v(:,:,i)));
     else
-        % First velocity update is modified
-        v(:,:,i) = del_t/m*F_total(:,:,i);
-        v_center = zeros(size(v(:,:,1)));
+        v_center = (v(:,:,i+1) + v(:,:,i)) / 2;
     end
-    
+
     % Find kinetic energy (KE)
     for j = 1:num_nodes
         KE(i) = KE(i) + 0.5*m*v_center(j,:)*v_center(j,:)';
     end
     
     % Kinetic damping: Reset velocity and KE to zero if peak was detected
+    % and flag for form finding process to restart
     if i > 1
         if KE(i) - KE(i-1) < 0
-            v(:,:,i) = 0;
+            % Reset velocity and KE
+            v(:,:,i+1) = 0;
             KE(i) = 0;
         end
     end
     
     % Update position
-    r(:,:,i+1) = r(:,:,i) + v(:,:,i)*del_t;
+    r(:,:,i+1) = r(:,:,i) + v(:,:,i+1)*del_t;
     
 end
 
 % Store updated rod length
-rod_length(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
+L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
     r(rod_pair(1,2),:,end));
 
 %% Output results
-% F_total
-% rod_length
+% F_total_end = F_total(:,:,end)
+% L_rod_end = L_rod(:,:,end)
+% r_end = r(:,:,end)
+fprintf('\nForce matrix at end of simulation:\n')
+disp(F_total(:,:,end))
+fprintf('\nNodal positions at end of simulation:\n')
+disp(r(:,:,end))
+fprintf('\nRod length change at end of simulation:\n')
+disp(L_rod(:,:,end)-L_rod(:,:,1))
 
 %% Plot results
 
+% Tensegrity
+fig = figure;
+fig.OuterPosition = [10 50 750 450];
+plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
+    num_rods, labels_on, style_initial)
+% addCoordinateSystemToPlot(r, rod_pair, num_rods)
+hold on
+plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
+    num_rods, labels_on, style_equilbrium)
+% addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')
+% addForceToPlot(r(:,:,end),F_cable(:,:,end),'b')
+addForceToPlot(r(:,:,end),F_total(:,:,end),'g')
+
 % Kinetic energy
-figure
-plot(0:sim_step-1,KE);
+fig = figure;
+fig.OuterPosition = [10 450 750 400];
+plot(0:sim_step-1,KE,'LineWidth',1.5);
 xlabel('Time step')
 ylabel('Kinetic energy')
 grid on
-
-% Tensegrity
-figure
-labels_on = 0;
-plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on)
-hold on
-plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on)
-addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')
-addForceToPlot(r(:,:,end),F_cable(:,:,end),'m')
