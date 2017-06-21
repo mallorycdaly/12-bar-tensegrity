@@ -19,7 +19,7 @@ clear; close all
 edge_length = 1;        % edge length of the top and bottom triangles
 height = 1;             % distance between top and bottom
 rotation_angle = 45;    % degrees, between top and bottom
-rod_radius = 0.1;       % used to check for intersection
+rod_radius = 0.01;      % used to check for intersection
 [r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
     L0_rod] = formThreeBar(edge_length, height, rotation_angle);
 
@@ -30,17 +30,7 @@ k_spring = 200;                     % spring constant of the springs
 L0_spring = zeros(num_cables,1);    % initial length of the springs
 
 % Desired rest lengths: The length of the string in series with the spring
-% rest_length = rand(num_cables,1).*L0_cable;
-rest_length = ...
-   [0.9649;
-    0.1576;
-    0.9706;
-    1.0465;
-    0.5307;
-    0.8749;
-    0.1419;
-    0.4218;
-    0.9157];
+rest_length = rand(num_cables,1).*L0_cable;
 
 % Simulation variables
 sim_step = 1e3;     % length of simulation
@@ -65,7 +55,6 @@ F_cable = zeros(num_nodes,3,sim_step);  % cable force at nodes
 F_rod = zeros(num_nodes,3,sim_step);    % rod force at nodes
 F_total = zeros(num_nodes,3,sim_step);  % total force at nodes
 L_rod = zeros(num_rods,1,sim_step+1);   % rod length
-intersect_found = zeros(sim_step,1);    % boolean for rod intersection
 
 % Run dynamic relaxation
 for i = 1:sim_step
@@ -104,19 +93,19 @@ for i = 1:sim_step
     % Update position
     r(:,:,i+1) = r(:,:,i) + v(:,:,i+1)*del_t;
     
-    % Check for rod intersection
-    intersect_found(i) = checkRodIntersection(r(:,:,i+1), rod_pair, ...
-        num_rods, rod_radius);
-    
 end
 
 % Store updated rod length
 L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
     r(rod_pair(1,2),:,end));
 
+% Check for rod intersection
+[intersect_found, P_intersect, P_distance] = ...
+    checkRodIntersection(r(:,:,end), rod_pair, num_rods, rod_radius);
+
 % Throw warning if a rod intersection was found.
-if any(intersect_found) == 1
-    warning('Rod intersection was found during the simulation.')
+if intersect_found == 1
+    warning('Configuration state has intersecting rods.')
 end
 
 %% Output results
@@ -127,8 +116,8 @@ fprintf('\nForce matrix at end of simulation:\n')
 disp(F_total(:,:,end))
 fprintf('\nNodal positions at end of simulation:\n')
 disp(r(:,:,end))
-fprintf('\nRod length change at end of simulation:\n')
-disp(L_rod(:,:,end)-L_rod(:,:,1))
+fprintf('\nRod length percent change:\n')
+disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
 
 %% Plot results
 

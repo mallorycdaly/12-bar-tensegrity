@@ -1,5 +1,5 @@
-function intersect_found = checkRodIntersection(r, rod_pair, num_rods, ...
-    rod_radius)
+function [intersect_found, P_intersect, P_distance] = ...
+    checkRodIntersection(r, rod_pair, num_rods, rod_radius)
 % This function checks if any two of the rods are intersected.
 %
 % The inputs are the following:
@@ -10,9 +10,13 @@ function intersect_found = checkRodIntersection(r, rod_pair, num_rods, ...
 %
 % The outputs are the following:
 %   intersect_found: boolean indicating whether an intersection was found
+%   P_intersect: point of intersection
+%   P_distance: distances of point to each rod
 
 % Find combinations of rods
 comb = combnk(1:num_rods,2);
+P_intersect = [];
+P_distance = [];
 
 % Check for intersections
 intersect_found = 0;
@@ -27,11 +31,13 @@ for i = 1:size(comb,1)
     node_B_end = rod_pair(rod_B,2);
     PA = [r(node_A_start,:); r(node_B_start,:)];
     PB = [r(node_A_end,:); r(node_B_end,:)];
-    [~,distance] = lineIntersect3D(PA,PB);
+    [intersect,distance] = lineIntersect3D(PA,PB);
+    P_intersect = [P_intersect; intersect];
+    P_distance = [P_distance; distance'];
     
     % Check if the distance is less than the rod's radius
-    for j = 1:length(distance)
-        if distance(j) < rod_radius
+    for j = 1:length(P_distance)
+        if P_distance(j) < rod_radius
             intersect_found = 1;
         end
     end
