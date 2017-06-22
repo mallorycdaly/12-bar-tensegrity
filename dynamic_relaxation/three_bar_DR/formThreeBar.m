@@ -1,5 +1,6 @@
 function [r, cable_pair, rod_pair, num_nodes, num_cables, num_rods, ...
-    L_cable, L_rod] = formThreeBar(edge_length, height, rotation_angle)
+    L_cable, L_rod, ground_face, num_faces] = formThreeBar(edge_length, ...
+    height, rotation_angle)
 % This function forms a three strut tensegrity prism using the numbering
 % scheme in Fig. 10. of "Review of Form-Finding Methods for Tensegrity
 % Structures" by A. Tibert.
@@ -20,6 +21,8 @@ function [r, cable_pair, rod_pair, num_nodes, num_cables, num_rods, ...
 %   num_rods: number of rods
 %   L_cable: lengths of the cables (node-to-node distance)
 %   L_rod: lengths of the rods
+%   ground_face: each row defines the nodal indices of a plane that could
+%       be used as the ground support face
 
 % Base triangle centered at (0,0,0)
 node4 = [edge_length/2 -sqrt(3)/6*edge_length 0];
@@ -52,8 +55,8 @@ cable_pair = [1 2;     % cable 1
            
 % Rods by pairs of node indices           
 rod_pair   = [1 6;     % bar 10
-               2 4;     % bar 11
-               3 5];    % bar 12
+              2 4;     % bar 11
+              3 5];    % bar 12
 
 % Find number of nodes, cables, and rods           
 num_nodes = size(r,1);
@@ -67,3 +70,11 @@ for i = 1: num_cables
         r(cable_pair(i,2),:));
 end
 L_rod = norm(r(rod_pair(1,1),:) - r(rod_pair(1,2),:));
+
+% Ground faces
+% Note: Node indices of ground faces should be ordered so that sequential
+% indices form an edge. This doesn't matter for a triangle, but matters for
+% any larger polygon. Important to the calculation of the distance of the
+% projected COG to the edge.
+ground_face = [1 2 3; 4 5 6];
+num_faces = size(ground_face,1);
