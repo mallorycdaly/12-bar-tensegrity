@@ -141,7 +141,7 @@ plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
 addForceToPlot(r(:,:,end),F_total(:,:,end),'g')     % plot total forces
 title('Initial (Blue) and Final (Red) Configurations')
 
-%% Tip condition: COG escapes supporting triangle
+%% Step condition: COG escapes supporting triangle
 % To do: make this generalizable to non-triangle faces
 escaped_poly = zeros(size(ground_face,1),1);
 distance = -inf*ones(size(ground_face,1),1);
@@ -206,12 +206,12 @@ for i = 1:size(ground_face,1)
     
 end
 
-%% Output tip condition results
+%% Output roll condition results
 if all(escaped_poly == 0)
-    fprintf('\nThe tip condition was NOT met.\n')
+    fprintf('\nThe step condition was NOT met.\n')
 else
     for i = find(escaped_poly == 1)'
-        fprintf(['\nThe tip condition was met for a projection onto ' ...
+        fprintf(['\nThe step condition was met for a projection onto ' ...
             'plane %i!\nThe distance from the edge was %1.5f.\n'], i, ...
             distance(i))
     end
