@@ -1,5 +1,5 @@
-%% Equilbrium Finder for Three Bar Tensegrity
-% This script finds the equilbrium position of a three bar tensegrity based
+%% Equilbrium Finder for 12-Bar Tensegrity
+% This script finds the equilbrium position of a 12-bar tensegrity based
 % on desired rest lengths. Dynamic relaxation is used to iteratively reach
 % the equilbrium configuration from the initial position.
 %
@@ -9,29 +9,31 @@
 % Affiliation: University of California, Berkeley
 %              Mechanical Engineering Department
 %              NASA Space Technology Research Fellow
-% Last Updated: June 21, 2017
+% Last Updated: June 22, 2017
 
 clear; close all
 
 %% Design Parameters
 
-% Three-bar tensegrity geometry
-edge_length = 1;        % edge length of the top and bottom triangles
-height = 1;             % distance between top and bottom
-rotation_angle = 45;    % degrees, between top and bottom
-rod_radius = 0.01;      % used to check for intersection
+% Twelve-bar tensegrity cube geometry
+rod_radius = 0.01;
+scaling_factor = 0.1;
 [r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
-    L0_rod, ground_face, num_faces] = formThreeBar(edge_length, height, ...
-    rotation_angle);
+    L0_rod, ground_face] = formTwelveBarCube(scaling_factor);
 
 % Mass and spring constants
-m = 10;                             % mass per node
-k_rod = 10000;                      % spring constant of the rods
-k_spring = 200;                     % spring constant of the springs
+m = 3;                             % mass per node
+k_rod = 1000;                      % spring constant of the rods
+k_spring = 100;                     % spring constant of the springs
 L0_spring = zeros(num_cables,1);    % initial length of the springs
 
+
 % Desired rest lengths: The length of the string in series with the spring
-rest_length = rand(num_cables,1).*L0_cable;
+rest_length = 0.99*L0_cable;
+rest_length(end) = 0.05*L0_cable(end);
+% rest_length([36 29 34 35]) = 0.1*L0_cable([36 29 34 35]);
+
+% rest_length = rand(num_cables,1).*L0_cable;
 
 % Simulation variables
 sim_step = 1e3;     % length of simulation
@@ -109,7 +111,7 @@ if intersect_found == 1
     warning('Configuration state has intersecting rods.')
 end
 
-%% Output dynamic relaxation results
+% %% Output dynamic relaxation results
 fprintf('\nForce matrix at end of simulation:\n')
 disp(F_total(:,:,end))
 fprintf('\nNodal positions at end of simulation:\n')
@@ -130,10 +132,10 @@ grid on
 % Initial and final tensegrity configurations
 figure
 % figure('OuterPosition', [10 50 750 450])
-plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on, style_initial)
+% plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
+%     num_rods, labels_on, style_initial)
 % addCoordinateSystemToPlot(r, rod_pair, num_rods)  % plot coordinate system
-hold on
+% hold on
 plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
     num_rods, labels_on, style_equilbrium)
 % addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')       % plot rod forces

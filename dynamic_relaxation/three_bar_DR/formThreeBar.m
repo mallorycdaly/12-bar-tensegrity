@@ -9,7 +9,6 @@ function [r, cable_pair, rod_pair, num_nodes, num_cables, num_rods, ...
 %   edge_length: the edge length of the top and bottom triangles
 %   height: the distance between the top and bottom triangles
 %   rotation_angle: the rotation angle between the top and bottom triangles
-
 %
 % The outputs are the following:
 %   r: matrix of x,y,z, position of nodes based on design parameters
