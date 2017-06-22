@@ -21,7 +21,8 @@ height = 1;             % distance between top and bottom
 rotation_angle = 45;    % degrees, between top and bottom
 rod_radius = 0.01;      % used to check for intersection
 [r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
-    L0_rod] = formThreeBar(edge_length, height, rotation_angle);
+    L0_rod, ground_face, num_faces] = formThreeBar(edge_length, height, ...
+    rotation_angle);
 
 % Mass and spring constants
 m = 10;                             % mass per node
@@ -108,10 +109,7 @@ if intersect_found == 1
     warning('Configuration state has intersecting rods.')
 end
 
-%% Output results
-% F_total_end = F_total(:,:,end)
-% L_rod_end = L_rod(:,:,end)
-% r_end = r(:,:,end)
+%% Output dynamic relaxation results
 fprintf('\nForce matrix at end of simulation:\n')
 disp(F_total(:,:,end))
 fprintf('\nNodal positions at end of simulation:\n')
@@ -119,25 +117,102 @@ disp(r(:,:,end))
 fprintf('\nRod length percent change:\n')
 disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
 
-%% Plot results
-
-% Tensegrity
-fig = figure;
-fig.OuterPosition = [10 50 750 450];
-plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on, style_initial)
-% addCoordinateSystemToPlot(r, rod_pair, num_rods)
-hold on
-plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on, style_equilbrium)
-% addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')
-% addForceToPlot(r(:,:,end),F_cable(:,:,end),'b')
-addForceToPlot(r(:,:,end),F_total(:,:,end),'g')
+%% Plot dynamic relaxation results
 
 % Kinetic energy
-fig = figure;
-fig.OuterPosition = [10 450 750 400];
+figure
+% figure('OuterPosition', [10 500 750 350])
 plot(0:sim_step-1,KE,'LineWidth',1.5);
 xlabel('Time step')
 ylabel('Kinetic energy')
 grid on
+
+% Initial and final tensegrity configurations
+figure
+% figure('OuterPosition', [10 50 750 450])
+plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
+    num_rods, labels_on, style_initial)
+% addCoordinateSystemToPlot(r, rod_pair, num_rods)  % plot coordinate system
+hold on
+plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
+    num_rods, labels_on, style_equilbrium)
+% addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')       % plot rod forces
+% addForceToPlot(r(:,:,end),F_cable(:,:,end),'b')     % plot cable forces
+addForceToPlot(r(:,:,end),F_total(:,:,end),'g')     % plot total forces
+title('Initial (Blue) and Final (Red) Configurations')
+
+%% Tip condition: COG escapes supporting triangle
+% To do: make this generalizable to non-triangle faces
+escaped_poly = zeros(size(ground_face,1),1);
+distance = -inf*ones(size(ground_face,1),1);
+edge_closest = zeros(size(ground_face,1),1);
+for i = 1:size(ground_face,1)
+    
+    % Find vector normal to a ground face
+    nodeA = r(ground_face(i,1),:,end);
+    nodeB = r(ground_face(i,2),:,end);
+    nodeC = r(ground_face(i,3),:,end);
+    normal_vec = cross(nodeA-nodeB,nodeC-nodeB);
+
+    % Find rotation matrix to orient ground face downwards
+    down = [0 0 -1];
+    normal_unit = normal_vec/norm(normal_vec);
+    v = cross(down,normal_unit);
+    s = norm(v);
+    if s ~= 0
+        c = dot(down,normal_unit);
+        v_ss = [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
+        R = eye(3) + v_ss + v_ss^2*(1-c)/s^2;
+    else
+        R = eye(3);
+    end
+
+    % Rotate nodes
+    r_rot = r(:,:,end)*R;
+
+    % Find COG of rotated tensegrity
+    COG = mean(r_rot,1);
+
+    % % Find projected COG
+    % COG_proj = [COG(1:2) r_rot(ground_face(i,1),3,end)];
+
+    % Find if projection of COG onto the ground plane is inside or outside the 
+    % supporting polygon
+    ground_poly = [r_rot(ground_face(i,1),:,end);
+                   r_rot(ground_face(i,2),:,end);
+                   r_rot(ground_face(i,3),:,end)];
+    escaped_poly(i) = ~inpolygon(COG(1), COG(2), ground_poly(:,1), ...
+        ground_poly(:,2));
+
+    % Find shortest distance to an edge, if it is outside the polygon
+    edges = size(ground_face,2);
+    wrapN = @(x,N)(1+mod(x,N));
+    if escaped_poly(i) == 1
+        [distance(i),~,~,~,edge_closest(i)] = p_poly_dist(COG(1), COG(2), ...
+            ground_poly(:,1), ground_poly(:,2), true);
+    end
+    
+    % Plot rotated tensegrity
+    figure
+%     figure('OuterPosition',[750 50 750 450])
+    plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
+        num_rods, labels_on, style_initial)
+    hold on
+    plotTensegrity(r_rot, cable_pair, rod_pair, num_nodes, num_cables, ...
+        num_rods, labels_on, style_equilbrium)
+    hold on
+    scatter3(COG(1),COG(2),COG(3),'Filled','r')
+    title(['Ground face ' num2str(i)])
+    
+end
+
+%% Output tip condition results
+if all(escaped_poly == 0)
+    fprintf('\nThe tip condition was NOT met.\n')
+else
+    for i = find(escaped_poly == 1)'
+        fprintf(['\nThe tip condition was met for a projection onto ' ...
+            'plane %i!\nThe distance from the edge was %1.5f.\n'], i, ...
+            distance(i))
+    end
+end
