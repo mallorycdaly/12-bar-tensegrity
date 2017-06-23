@@ -30,8 +30,9 @@ L0_spring = zeros(num_cables,1);    % initial length of the springs
 
 % Desired rest lengths: The length of the string in series with the spring
 rest_length = 0.99*L0_cable;
-rest_length(end) = 0.05*L0_cable(end);
-% rest_length([36 29 34 35]) = 0.1*L0_cable([36 29 34 35]);
+% rest_length(end) = 0.05*L0_cable(end);
+short_segs = [16 20 24 28 7 11 33 32 1 12 35 36];
+rest_length(short_segs) = 0.05*L0_cable(short_segs);
 
 % rest_length = rand(num_cables,1).*L0_cable;
 
@@ -111,7 +112,7 @@ if intersect_found == 1
     warning('Configuration state has intersecting rods.')
 end
 
-% %% Output dynamic relaxation results
+%% Output dynamic relaxation results
 fprintf('\nForce matrix at end of simulation:\n')
 disp(F_total(:,:,end))
 fprintf('\nNodal positions at end of simulation:\n')
@@ -145,16 +146,14 @@ title('Initial (Blue) and Final (Red) Configurations')
 
 %% Step condition: COG escapes supporting triangle
 % To do: make this generalizable to non-triangle faces
-escaped_poly = zeros(size(ground_face,1),1);
-distance = -inf*ones(size(ground_face,1),1);
-edge_closest = zeros(size(ground_face,1),1);
-for i = 1:size(ground_face,1)
+num_polygons = size(ground_face,1);
+escaped_poly = zeros(num_polygons,1);
+distance = -inf*ones(num_polygons,1);
+edge_closest = zeros(num_polygons,1);
+for i = 1:num_polygons
     
     % Find vector normal to a ground face
-    nodeA = r(ground_face(i,1),:,end);
-    nodeB = r(ground_face(i,2),:,end);
-    nodeC = r(ground_face(i,3),:,end);
-    normal_vec = cross(nodeA-nodeB,nodeC-nodeB);
+    normal_vec = findAvgNormalVector(r(:,:,end), ground_face(i,:));
 
     % Find rotation matrix to orient ground face downwards
     down = [0 0 -1];
@@ -178,33 +177,35 @@ for i = 1:size(ground_face,1)
     % % Find projected COG
     % COG_proj = [COG(1:2) r_rot(ground_face(i,1),3,end)];
 
-    % Find if projection of COG onto the ground plane is inside or outside the 
-    % supporting polygon
-    ground_poly = [r_rot(ground_face(i,1),:,end);
-                   r_rot(ground_face(i,2),:,end);
-                   r_rot(ground_face(i,3),:,end)];
+    % Find if projection of COG onto the ground plane is inside or outside 
+    % the supporting polygon
+    ground_poly = findGroundPoly(r_rot, ground_face(i,:));
     escaped_poly(i) = ~inpolygon(COG(1), COG(2), ground_poly(:,1), ...
         ground_poly(:,2));
 
     % Find shortest distance to an edge, if it is outside the polygon
-    edges = size(ground_face,2);
     wrapN = @(x,N)(1+mod(x,N));
     if escaped_poly(i) == 1
         [distance(i),~,~,~,edge_closest(i)] = p_poly_dist(COG(1), COG(2), ...
             ground_poly(:,1), ground_poly(:,2), true);
     end
     
-    % Plot rotated tensegrity
-    figure
-%     figure('OuterPosition',[750 50 750 450])
-    plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-        num_rods, labels_on, style_initial)
-    hold on
-    plotTensegrity(r_rot, cable_pair, rod_pair, num_nodes, num_cables, ...
-        num_rods, labels_on, style_equilbrium)
+    % Plot COG
     hold on
     scatter3(COG(1),COG(2),COG(3),'Filled','r')
-    title(['Ground face ' num2str(i)])
+    
+    % Plot rotated tensegrity, if COG escaped
+    if escaped_poly(i) == 1
+        figure
+    %     figure('OuterPosition',[750 50 750 450])
+    %     plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
+    %         num_rods, labels_on, style_initial)
+    %     hold on
+        plotTensegrity(r_rot, cable_pair, rod_pair, num_nodes, num_cables, ...
+            num_rods, labels_on, style_equilbrium)
+        hold on
+        title(['Ground face ' num2str(i)])
+    end
     
 end
 
@@ -214,7 +215,7 @@ if all(escaped_poly == 0)
 else
     for i = find(escaped_poly == 1)'
         fprintf(['\nThe step condition was met for a projection onto ' ...
-            'plane %i!\nThe distance from the edge was %1.5f.\n'], i, ...
-            distance(i))
+            'ground face %i!\nThe distance from the edge was %.5f.\n'], ...
+            i, distance(i))
     end
 end

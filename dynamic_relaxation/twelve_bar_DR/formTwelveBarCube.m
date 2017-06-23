@@ -131,18 +131,20 @@ L_rod = norm(r(rod_pair(1,1),:) - r(rod_pair(1,2),:));
 % indices form an edge. This doesn't matter for a triangle, but matters for
 % any larger polygon. Important to the calculation of the distance of the
 % projected COG to the edge.
-ground_face.octagon = [ 1 16  5 18  9 20 13 22;
-                        0  2 15 21  5 16 19 11;
-                        0  2  4  6  8 10 12 14;
-                       10  8  3 23 20 13 17  7;
-                       14 12  7 17 22  1 19 11;
-                        4  6  3 23  9 18 21 15] + 1;
-                        
-ground_face.triangle = [ 0 14 11;
-                         2  4 15;
-                         6  8  3;
-                        10 12  7;
-                         1 16 19;
-                         5 21 18;
-                         9 23 20;
-                        13 17 22] + 1;
+ground_face = [ 1 16  5 18  9 20 13 22;
+                0  2 15 21  5 16 19 11;
+                0  2  4  6  8 10 12 14;
+               10  8  3 23 20 13 17  7;
+               14 12  7 17 22  1 19 11;
+                4  6  3 23  9 18 21 15] + 1;
+
+% Since the triangles won't be the base face, I don't need to include them
+% in my analysis            
+% ground_face{2} = [ 0 14 11;
+%                    2  4 15;
+%                    6  8  3;
+%                   10 12  7;
+%                    1 16 19;
+%                    5 21 18;
+%                    9 23 20;
+%                   13 17 22] + 1;
