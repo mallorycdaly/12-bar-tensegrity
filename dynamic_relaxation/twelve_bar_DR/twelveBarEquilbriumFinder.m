@@ -5,11 +5,11 @@
 %
 % This version of dynamic relaxation models the rods as stiff springs. 
 %
-% Author: Mallory Daly
+% Author: Mallory C. Daly
 % Affiliation: University of California, Berkeley
 %              Mechanical Engineering Department
 %              NASA Space Technology Research Fellow
-% Last Updated: June 22, 2017
+% Last Updated: June 26, 2017
 
 clear; close all
 
@@ -18,131 +18,101 @@ clear; close all
 % Twelve-bar tensegrity cube geometry
 rod_radius = 0.01;
 scaling_factor = 0.1;
-[r0, cable_pair, rod_pair, num_nodes, num_cables, num_rods, L0_cable, ...
-    L0_rod, ground_face] = formTwelveBarCube(scaling_factor);
+
+% Actuated cables
+actuated_cable_pair = [ 4  9;  % base deformation cable
+                        3 21;
+                       18 22;
+                       16 20;
+                        7 23;
+                       13  8;
+                        6 14;
+                        2 10;
+                       15 19;
+                        0  5;
+                        1 12;
+                       11 17] + 1; 
 
 % Mass and spring constants
-m = 3;                             % mass per node
-k_rod = 1000;                      % spring constant of the rods
-k_spring = 100;                     % spring constant of the springs
-L0_spring = zeros(num_cables,1);    % initial length of the springs
+m = 10;              % mass per node
+k_rod = 1000;       % spring constant of the rods
+k_lattice = 100;    % spring constant of the elastic lattice
+k_cable = 1000;     % spring constant of the actuated cable
+L0_spring = zeros(num_cables,1);  % initial length of the springs
 
-
-% Desired rest lengths: The length of the string in series with the spring
-rest_length = 0.99*L0_cable;
-% rest_length(end) = 0.05*L0_cable(end);
-short_segs = [16 20 24 28 7 11 33 32 1 12 35 36];
-rest_length(short_segs) = 0.05*L0_cable(short_segs);
-
-% rest_length = rand(num_cables,1).*L0_cable;
+% Percent of cable length for calculation of actuated cables' rest lengths
+actuation_percent = 0.05;
 
 % Simulation variables
-sim_step = 1e3;     % length of simulation
+sim_steps = 1e3;    % length of simulation
 del_t = 1e-2;       % time
 
 % Plotting format
 style_initial = 'b';        % formats plot style of initial tensegrity
-style_equilbrium = 'r';     % formats plot style of equilbrium tensegrity
+style_final = 'r';          % formats plot style of final tensegrity
+style_actuated = 'k';       % formats plot style of actuated cables
 labels_on = 1;              % adds labels of node, cable, and rod numbers
+plot_initial = 0;           % plots initial configuration with final
 
-%% Dynamic relaxation
+%% Dynamic relaxation (DR)
+num_actuated_cables = size(actuated_cable_pair,1);
+for i = 1:num_actuated_cables-1
 
-% Initialize variables
-% Note: All variables except velocity are incremented by del_t starting
-% from t = 0 (index 1 in MATLAB). Velocity is incremented by del_t starting
-% from t = -del_t/2 (index 1).
-r = zeros(num_nodes,3,sim_step+1);      % nodal positions
-r(:,:,1) = r0;                          % initial nodal positions are known
-v = zeros(num_nodes,3,sim_step+1);    	% nodal velocities
-KE = zeros(sim_step,1);                 % kinetic energy
-F_cable = zeros(num_nodes,3,sim_step);  % cable force at nodes
-F_rod = zeros(num_nodes,3,sim_step);    % rod force at nodes
-F_total = zeros(num_nodes,3,sim_step);  % total force at nodes
-L_rod = zeros(num_rods,1,sim_step+1);   % rod length
-
-% Run dynamic relaxation
-for i = 1:sim_step
-
-    % Find forces acting on each node
-    F_cable(:,:,i) = findCableForce(r(:,:,i), cable_pair, num_nodes, ...
-        k_spring, L0_spring, rest_length);
-    [F_rod(:,:,i),L_rod(:,:,i)] = findRodForce(r(:,:,i), rod_pair, ...
-        num_nodes, num_rods, k_rod, L0_rod);
-    F_total(:,:,i) = F_cable(:,:,i) + F_rod(:,:,i);
+    tmp_actuated_cable_pair = [actuated_cable_pair(1,:);
+                               actuated_cable_pair(i,:)];
+    [r0, cable_pair, rod_pair, L0_cable, L0_rod, ground_face] = ...
+        formTwelveBarCube(scaling_factor, tmp_actuated_cable_pair);
     
-    % Find velocity at t + del_t/2, and velocity centered at t using
-    % average of t+del_t/2 and t-del_t/2
-    v(:,:,i+1) = v(:,:,i) + F_total(:,:,i)/(m/del_t);
-    if i == 1
-        v_center = zeros(size(v(:,:,i)));
-    else
-        v_center = (v(:,:,i+1) + v(:,:,i)) / 2;
-    end
-
-    % Find kinetic energy (KE)
-    for j = 1:num_nodes
-        KE(i) = KE(i) + 0.5*m*v_center(j,:)*v_center(j,:)';
-    end
+    % Change length of secondary cable
+    rest_lengths = 0.99*L0_cable;
+    rest_lengths(end-i+1) = actuation_percent * L0_cable(end-i+1);
     
-    % Kinetic damping: Reset velocity and KE to zero if peak was detected
-    % and flag for form finding process to restart
-    if i > 1
-        if KE(i) - KE(i-1) < 0
-            % Reset velocity and KE
-            v(:,:,i+1) = 0;
-            KE(i) = 0;
+    % Run DR
+    [r, v, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
+        cable_pair, rod_pair, rod_radius, m, k_lattice, L0_spring, k_rod, ...
+        L0_rod, rest_lengths, sim_steps, del_t);
+
+    % Output results
+    fprintf('\nForce matrix at end of simulation:\n')
+    disp(F_total(:,:,end))
+    fprintf('\nNodal positions at end of simulation:\n')
+    disp(r(:,:,end))
+    fprintf('\nRod length percent change:\n')
+    disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
+
+    % Plot results
+
+%         % Kinetic energy
+%         figure
+%         % figure('OuterPosition', [10 500 750 350])
+%         plot(0:sim_steps-1,KE,'LineWidth',1.5);
+%         xlabel('Time step')
+%         ylabel('Kinetic energy')
+%         grid on
+
+        % Final and initial tensegrity configurations
+        figure
+        % figure('OuterPosition', [10 50 750 450])
+        unactuated_cable_pair = cable_pair(1:num_cables - ...
+            num_actuated_cables,:);
+        plotTensegrity(r(:,:,end), unactuated_cable_pair, rod_pair, ...
+            labels_on, style_final)
+        hold on
+        plotTensegrity(r(:,:,end), actuated_cable_pair, rod_pair, ...
+            0, style_actuated)
+        addForceToPlot(r(:,:,end),F_total(:,:,end),'g')  % plot total forces
+        if plot_initial == 1
+            hold on
+            plotTensegrity(r0, cable_pair, rod_pair, 0, ...
+                style_initial)
+            % addCoordinateSystemToPlot(r, rod_pair, num_rods)  % plot coordinate system
+            title('Initial and Final Configurations')
+        else
+%             title('Final Configuration')
+            title(['Secondary cable actuated: ' num2str(-i+12)])
         end
-    end
-    
-    % Update position
-    r(:,:,i+1) = r(:,:,i) + v(:,:,i+1)*del_t;
-    
+        
 end
-
-% Store updated rod length
-L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
-    r(rod_pair(1,2),:,end));
-
-% Check for rod intersection
-[intersect_found, P_intersect, P_distance] = ...
-    checkRodIntersection(r(:,:,end), rod_pair, num_rods, rod_radius);
-
-% Throw warning if a rod intersection was found.
-if intersect_found == 1
-    warning('Configuration state has intersecting rods.')
-end
-
-%% Output dynamic relaxation results
-fprintf('\nForce matrix at end of simulation:\n')
-disp(F_total(:,:,end))
-fprintf('\nNodal positions at end of simulation:\n')
-disp(r(:,:,end))
-fprintf('\nRod length percent change:\n')
-disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
-
-%% Plot dynamic relaxation results
-
-% Kinetic energy
-figure
-% figure('OuterPosition', [10 500 750 350])
-plot(0:sim_step-1,KE,'LineWidth',1.5);
-xlabel('Time step')
-ylabel('Kinetic energy')
-grid on
-
-% Initial and final tensegrity configurations
-figure
-% figure('OuterPosition', [10 50 750 450])
-% plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-%     num_rods, labels_on, style_initial)
-% addCoordinateSystemToPlot(r, rod_pair, num_rods)  % plot coordinate system
-% hold on
-plotTensegrity(r(:,:,end), cable_pair, rod_pair, num_nodes, num_cables, ...
-    num_rods, labels_on, style_equilbrium)
-% addForceToPlot(r(:,:,end),F_rod(:,:,end),'r')       % plot rod forces
-% addForceToPlot(r(:,:,end),F_cable(:,:,end),'b')     % plot cable forces
-addForceToPlot(r(:,:,end),F_total(:,:,end),'g')     % plot total forces
-title('Initial (Blue) and Final (Red) Configurations')
 
 %% Step condition: COG escapes supporting triangle
 % To do: make this generalizable to non-triangle faces
@@ -201,8 +171,8 @@ for i = 1:num_polygons
     %     plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
     %         num_rods, labels_on, style_initial)
     %     hold on
-        plotTensegrity(r_rot, cable_pair, rod_pair, num_nodes, num_cables, ...
-            num_rods, labels_on, style_equilbrium)
+        plotTensegrity(r_rot, cable_pair, rod_pair, labels_on, ...
+            style_equilbrium)
         hold on
         title(['Ground face ' num2str(i)])
     end

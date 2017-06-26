@@ -1,17 +1,19 @@
 function [intersect_found, P_intersect, P_distance] = ...
-    checkRodIntersection(r, rod_pair, num_rods, rod_radius)
+    checkRodIntersection(r, rod_pair, rod_radius)
 % This function checks if any two of the rods are intersected.
 %
 % The inputs are the following:
 %   r: matrix of x,y,z, position of nodes
 %   rod_pair: each row defines the node indices corresponding to that rod
-%   num_rods: number of rods
 %   rod_radius: radius of the rod
 %
 % The outputs are the following:
 %   intersect_found: boolean indicating whether an intersection was found
 %   P_intersect: point of intersection
 %   P_distance: distances of point to each rod
+
+% Grab number of rods
+num_rods = size(rod_pair,1);
 
 % Find combinations of rods
 comb = combnk(1:num_rods,2);

@@ -1,5 +1,5 @@
 function F_cable = findCableForce(r, cable_pair, num_nodes, k_spring, ...
-    L0_spring, rest_length)
+    L0_spring, rest_lengths)
 % This function calculates the cable forces on each node. The cable is
 % modeled as an inflexible string in series with a spring. The length of
 % the string is the rest length. The force magnitude of the spring is found
@@ -11,10 +11,10 @@ function F_cable = findCableForce(r, cable_pair, num_nodes, k_spring, ...
 %     cable
 %   num_nodes: number of nodes
 %   k_spring: spring constant of the springs
-%   L0_spring: vector of initial lengths of the springs
-%   rest_length: lengths of strings in the cable, defined as the cable rest
-%       lengths, such that spring length can be found as total cable length
-%       (node-to-node distance) minus rest length
+%   L0_spring: initial length of the springs
+%   rest_lengths: lengths of strings in the cable, defined as the cable 
+%       rest lengths, such that spring length can be found as total cable 
+%       length (node-to-node distance) minus rest length
 %
 % The outputs are the following:
 %   F_cable: each row defines the force vector (x,y,z) acting on the node
@@ -47,10 +47,10 @@ for i = 1:num_nodes
         e_C = (r(node_j,:) - r(node_i,:)) / cable_length;
         
         % Cables can't push, so only add force is spring length is positive
-        L_spring = cable_length - rest_length(cable(n));
+        L_spring = cable_length - rest_lengths(cable(n));
         if L_spring > 0
             F_cable(i,:) = F_cable(i,:) + k_spring* ...
-                (L_spring - L0_spring(cable(n))) * e_C;
+                (L_spring - L0_spring) * e_C;
         end
         
     end

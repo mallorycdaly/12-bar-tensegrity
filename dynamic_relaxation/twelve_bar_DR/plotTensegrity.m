@@ -1,5 +1,5 @@
-function plotTensegrity(nodes, cable_pair, rod_pair, num_nodes, ...
-    num_cables, num_rods, labels_on, cable_format)
+function plotTensegrity(nodes, cable_pair, rod_pair, labels_on, ...
+    cable_format)
 % Generic tensegrity plotter.
 %
 % The inputs are the following:
@@ -7,12 +7,14 @@ function plotTensegrity(nodes, cable_pair, rod_pair, num_nodes, ...
 %   cable_pair: each row defines the node indices corresponding to that
 %     cable
 %   rod_pair: each row defines the node indices corresponding to that bar
-%   num_nodes: number of nodes
-%   num_cables: number of cables
-%   num_rods: number of rods
 %   labels_on: boolean to add labels of bars and cables to plot
 %   cable_format: character string made from elements of plotting columns
 %       (e.g. '-k')
+
+% Grab number of nodes, cables, and rods
+num_nodes = size(nodes,1);
+num_cables = size(cable_pair,1);
+num_rods = size(rod_pair,1);
 
 % Plot nodes
 for i = 1:num_nodes
@@ -20,7 +22,7 @@ for i = 1:num_nodes
     scatter3(nodes(i,1),nodes(i,2),nodes(i,3),'k','filled')
     if labels_on == 1
         text(nodes(i,1),nodes(i,2),nodes(i,3),...
-            ['  ' num2str(i) '  '],'FontWeight','Bold')
+            ['  ' num2str(i-1) '  '],'FontWeight','Bold')
     end
 end 
 axis equal
@@ -38,7 +40,7 @@ for i = 1:num_cables
     plot3(cable_x,cable_y,cable_z,'b','LineWidth',1.5,'Color',cable_format)
     if labels_on == 1
         text(sum(cable_x)/2,sum(cable_y)/2,sum(cable_z)/2,...
-            ['  ' num2str(i) '  '],'Color',cable_format)
+            ['  ' num2str(i-1) '  '],'Color',cable_format)
     end
 end
 
@@ -51,6 +53,6 @@ for i = 1:num_rods
     plot3(bar_x,bar_y,bar_z,'k','LineWidth',2.5)
     if labels_on == 1
         text(sum(bar_x)/2,sum(bar_y)/2,sum(bar_z)/2,...
-            ['  ' num2str(i+9) '  '])
+            ['  ' num2str(i+9-1) '  '])
     end
 end
