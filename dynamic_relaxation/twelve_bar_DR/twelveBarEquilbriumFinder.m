@@ -24,11 +24,16 @@ k_rod = 1000;       % spring constant of the rods
 k_lattice = 100;    % spring constant of the elastic lattice
 k_cable = 1000;     % spring constant of the actuated cable
 L0_spring = 0;      % initial length of the springs
+
+% Form 12-bar with actuated cables
+% actuated_pair = [];
+actuated_pair = [4 9] + 1;
 [r0, cable_pair, rod_pair, L0_cable, L0_rod, ground_face] = ...
-    formTwelveBarCube(scaling_factor, []);
+    formTwelveBarCube(scaling_factor, actuated_pair);
 
 % Rest lengths
-rest_lengths = 0.8*L0_cable;
+rest_lengths = 0.9*L0_cable;
+rest_lengths(end) = 0.2*L0_cable(end);
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -74,7 +79,7 @@ disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
     % Initial tensegrity
     if plot_initial == 1
         hold on
-        plotTensegrity(r0, cable_pair, rod_pair, 0, style_initial)
+        plotTensegrity(r0, cable_pair, rod_pair, labels_on, style_initial)
         % addCoordinateSystemToPlot(r, rod_pair, num_rods)
         title('Initial and Final Configurations')
     else

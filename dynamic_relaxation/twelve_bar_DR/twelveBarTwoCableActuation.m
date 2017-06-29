@@ -4,7 +4,7 @@
 % base cable and is kept constant. A set of secondary cables is defined.
 % Each of these cables is paired with the base cable and the equilbrium
 % configuration is evaluated for tipping condition, which occurs when the
-% COG escapes the base triangle. Dynamic relaxation is used to iteratively
+% COG escapes the base polygon. Dynamic relaxation is used to iteratively
 % reach the equilbrium configuration. This version of dynamic relaxation
 % models the rods as stiff springs. 
 %
@@ -12,15 +12,15 @@
 % Affiliation: University of California, Berkeley
 %              Mechanical Engineering Department
 %              NASA Space Technology Research Fellow
-% Last Updated: June 26, 2017
+% Last Updated: June 29, 2017
 
 clear; close all
 
 %% Design Parameters
 
 % Twelve-bar tensegrity cube geometry
+scaling_factor = 0.1;  % scales node positions
 rod_radius = 0.01;
-scaling_factor = 0.1;
 
 % Actuated cables
 actuated_cable_pair = [ 4  9;  % base deformation cable
@@ -39,12 +39,12 @@ actuated_cable_pair = [ 4  9;  % base deformation cable
 % Mass and spring constants
 m = 10;             % mass per node
 k_rod = 1000;       % spring constant of the rods
-k_cable = 1000;    % spring constant of the elastic lattice
+k_cable = 50;     % spring constant of the elastic lattice
 L0_spring = 0;      % initial length of the springs
 
 % Percent of cable length for calculation of actuated cables' rest lengths
-actuation_percent_base = 0.25;
-actuation_percent_secondary = 0.25;
+percent_base = 0.4;
+percent_secondary = 0.4;
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -66,8 +66,8 @@ num_actuated_cables = size(actuated_cable_pair,1);
 for i = 1:num_actuated_cables-1
 
     % Form 12-bar for current actuated cables
-    curr_actuated_cable_pair = [actuated_cable_pair(1,:);
-                                actuated_cable_pair(i+1,:)];
+    curr_actuated_cable_pair = [actuated_cable_pair(1,:);       % base
+                                actuated_cable_pair(i+1,:)];    % secondary
     [r0, cable_pair, rod_pair, L0_cable, L0_rod, ground_face] = ...
         formTwelveBarCube(scaling_factor, curr_actuated_cable_pair);
     
@@ -77,8 +77,8 @@ for i = 1:num_actuated_cables-1
     
     % Change length of current actuated cables
     rest_lengths = 0.99*L0_cable;
-    rest_lengths(end-1) = actuation_percent_base*L0_cable(end-1);   % base cable
-    rest_lengths(end) = actuation_percent_secondary*L0_cable(end);  % secondary cable
+    rest_lengths(end-1) = percent_base*L0_cable(end-1);   % base cable
+    rest_lengths(end) = percent_secondary*L0_cable(end);  % secondary cable
     
     % Run DR
     [r, v, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
@@ -105,15 +105,22 @@ for i = 1:num_actuated_cables-1
         disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
     end
         
-    % Step condition: COG escapes supporting triangle
+    % Step condition: COG escapes supporting polygon
     num_polygons = size(ground_face,1);
     escaped_poly = zeros(num_polygons,1);
     distance = -inf*ones(num_polygons,1);
     edge_closest = zeros(num_polygons,1);
     for j = 1:num_polygons
+    % NOTE: Could have multiple ground faces. This program most often run
+    % with just one ground face, the base face, but loop kept for
+    % adaptation to other programs.
 
         % Find vector normal to a ground face
-        normal_vec = findAvgNormalVector(r(:,:,end), ground_face(j,:));
+        normal_vec = findAvgNormalVector(r(:,:,end), ground_face(j,:))
+        % Want vector to point down, not up
+        if (sign(normal_vec(3)) == 1)
+            normal_vec = -normal_vec;
+        end
 
         % Find rotation matrix to orient ground face downwards
         down = [0 0 -1];
@@ -150,17 +157,16 @@ for i = 1:num_actuated_cables-1
                 COG(2), ground_poly(:,1), ground_poly(:,2), true);
         end
 
-        % Plot tensegrity, if COG escaped
+        % Plot rotated tensegrity, if COG escaped
         if escaped_poly(j) == 1
             figure
-            plotTensegrity(r(:,:,end), ...
+            plotTensegrity(r_rot, ...
                 cable_pair(1:num_unactuated_cables,:), rod_pair, ...
                 labels_on, style_final)
             hold on
-            plotTensegrity(r(:,:,end), curr_actuated_cable_pair, ...
+            plotTensegrity(r_rot, curr_actuated_cable_pair, ...
                 rod_pair, 0, style_actuated)
             hold on
-            COG = mean(r(:,:,end),1);
             scatter3(COG(1),COG(2),COG(3),'Filled','r')
             title(['Secondary cable: ' num2str(i-1)])
             
