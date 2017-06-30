@@ -8,86 +8,115 @@
 % Affiliation: University of California, Berkeley
 %              Mechanical Engineering Department
 %              NASA Space Technology Research Fellow
-% Last Updated: June 26, 2017
+% Last Updated: June 29, 2017
 
 clear; close all
 
 %% Design Parameters
 
 % Twelve-bar tensegrity cube geometry
-rod_radius = 0.01;
-scaling_factor = 0.1;
+rod_radius = 0.01;      % used for rod intersection check
+scaling_factor = 0.1;   % scales node positions
 
 % Mass and spring constants
 m = 10;             % mass per node
 k_rod = 1000;       % spring constant of the rods
-k_lattice = 100;    % spring constant of the elastic lattice
-k_cable = 1000;     % spring constant of the actuated cable
+k_lattice = 200;    % spring constant of the elastic lattice
 L0_spring = 0;      % initial length of the springs
 
-% Form 12-bar with actuated cables
-% actuated_pair = [];
-actuated_pair = [4 9] + 1;
-[r0, cable_pair, rod_pair, L0_cable, L0_rod, ground_face] = ...
-    formTwelveBarCube(scaling_factor, actuated_pair);
+% Form 12-bar
+ground_face = [   4  6  3 23  9 18 21 15] + 1;
+% ground_face = [ 1 16  5 18  9 20 13 22;
+%                 0  2 15 21  5 16 19 11;
+%                 0  2  4  6  8 10 12 14;
+%                10  8  3 23 20 13 17  7;
+%                14 12  7 17 22  1 19 11;
+%                 4  6  3 23  9 18 21 15] + 1;
+cross_body_pair = [];
+% cross_body_pair = [ 4  9;         % bottom /
+%                     1 12;         % top /
+%                    18 22;         % front /
+%                    15 19;         % left /
+%                     6 14;         % back /
+%                     7 23;         % right /
+%                     3 21;         % bottom \
+%                    11 17;         % top \
+%                    16 20;         % front \
+%                     0  5;         % left \
+%                     2 10;         % back \
+%                     8 13] + 1;  	% right\
+[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
+    scaling_factor, ground_face, cross_body_pair);
 
 % Rest lengths
-rest_lengths = 0.9*L0_cable;
-rest_lengths(end) = 0.2*L0_cable(end);
+% percent_length = rand(size(L0_cable))
+% rest_lengths = percent_length.*L0_cable;
+rest_lengths = 0.95*L0_cable;
+% rest_lengths([1 12 35 36 28 16 20 24 32 7 11 33]) = 0.3*L0_cable([1 12 35
+% 36 28 16 20 24 32 7 11 33]);  % make triangles larger
+% rest_lengths(end) = 0.2*L0_cable(end);  % actuate last segment
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
 del_t = 1e-2;       % time
 
 % Plotting format
-style_initial = 'b';        % formats plot style of initial tensegrity
-style_final = 'r';          % formats plot style of final tensegrity
-style_actuated = 'k';       % formats plot style of actuated cables
-labels_on = 1;              % adds labels of node, cable, and rod numbers
-plot_initial = 0;           % plots initial configuration with final
+color_initial = 'b';        % formats color of initial tensegrity plot
+color_final = 'r';          % formats color of final tensegrity plot
+color_actuated = 'k';       % formats color of actuated cables
+labels_on = 0;              % add labels of node, cable, and rod numbers
+plot_initial = 0;           % plot initial configuration with final
+plot_KE = 1;                % plot kinetic energy
 
 %% Dynamic relaxation (DR)
 
 % Run DR
 [r, v, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
-    cable_pair, rod_pair, rod_radius, m, k_lattice, L0_spring, k_rod, ...
-    L0_rod, rest_lengths, sim_steps, del_t);
+    cable_pair, rod_pair, m, k_lattice, L0_spring, k_rod, L0_rod, ...
+    rest_lengths, sim_steps, del_t);
 
 % Output results
 fprintf('\nForce matrix at end of simulation:\n')
 disp(F_total(:,:,end))
-fprintf('\nNodal positions at end of simulation:\n')
-disp(r(:,:,end))
+% fprintf('\nNodal positions at end of simulation:\n')
+% disp(r(:,:,end))
 fprintf('\nRod length percent change:\n')
 disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
 
 % Plot results
 
     % Kinetic energy
-    figure
-    plot(0:sim_steps-1,KE,'LineWidth',1.5);
-    xlabel('Time step')
-    ylabel('Kinetic energy')
-    grid on
+    if plot_KE == 1
+        figure
+        plot(0:sim_steps-1,KE/max(KE),'LineWidth',1.5);
+        xlabel('Time step')
+        ylabel('Normalized kinetic energy')
+        grid on
+    end
 
     % Final tensegrity
     figure
-    plotTensegrity(r(:,:,end), cable_pair, rod_pair, ...
-        labels_on, style_final)
+    plotTensegrity(r(:,:,end), cable_pair, rod_pair, labels_on, ...
+        color_final)
     addForceToPlot(r(:,:,end),F_total(:,:,end),'g')  % plot total forces
+    COG = mean(r(:,:,end),1);
+    hold on
+    scatter3(COG(1),COG(2),COG(3),'Filled',color_final)
+    hold on
+    plot3([COG(1); COG(1)], [COG(2); COG(2)], [COG(3); ...
+        min(r(:,3,end))],['--' color_final])
     
     % Initial tensegrity
     if plot_initial == 1
         hold on
-        plotTensegrity(r0, cable_pair, rod_pair, labels_on, style_initial)
+        plotTensegrity(r0, cable_pair, rod_pair, labels_on, color_initial)
         % addCoordinateSystemToPlot(r, rod_pair, num_rods)
         title('Initial and Final Configurations')
     else
         title('Final Configuration')
     end
 
-%% Step condition: COG escapes supporting triangle
-% To do: make this generalizable to non-triangle faces
+%% Step condition: COG escapes supporting polygon
 num_polygons = size(ground_face,1);
 escaped_poly = zeros(num_polygons,1);
 distance = -inf*ones(num_polygons,1);
@@ -96,13 +125,18 @@ for i = 1:num_polygons
     
     % Find vector normal to a ground face
     normal_vec = findAvgNormalVector(r(:,:,end), ground_face(i,:));
+    % Want vector to point down, not up (for ground face that's on
+    % bottom)
+    if (sign(normal_vec(3)) == 1)
+        normal_vec = -normal_vec;
+    end
 
     % Find rotation matrix to orient ground face downwards
     down = [0 0 -1];
     normal_unit = normal_vec/norm(normal_vec);
     v = cross(down,normal_unit);
     s = norm(v);
-    if s ~= 0
+    if round(s,12) ~= 0
         c = dot(down,normal_unit);
         v_ss = [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
         R = eye(3) + v_ss + v_ss^2*(1-c)/s^2;
@@ -132,20 +166,13 @@ for i = 1:num_polygons
             ground_poly(:,1), ground_poly(:,2), true);
     end
     
-    % Plot COG
-    hold on
-    scatter3(COG(1),COG(2),COG(3),'Filled','r')
-    
     % Plot rotated tensegrity, if COG escaped
     if escaped_poly(i) == 1
         figure
-    %     figure('OuterPosition',[750 50 750 450])
-    %     plotTensegrity(r0, cable_pair, rod_pair, num_nodes, num_cables, ...
-    %         num_rods, labels_on, style_initial)
-    %     hold on
         plotTensegrity(r_rot, cable_pair, rod_pair, labels_on, ...
-            style_equilbrium)
+            color_final)
         hold on
+        scatter3(COG(1),COG(2),COG(3),'Filled',color_final)
         title(['Ground face ' num2str(i)])
     end
     

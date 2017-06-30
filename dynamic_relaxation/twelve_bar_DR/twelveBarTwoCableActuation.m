@@ -19,8 +19,9 @@ clear; close all
 %% Design Parameters
 
 % Twelve-bar tensegrity cube geometry
-scaling_factor = 0.1;  % scales node positions
-rod_radius = 0.01;
+scaling_factor = 0.1;   % scales node positions
+rod_radius = 0.01;      % used for rod intersection check
+ground_face = [4 6 3 23 9 18 21 15] + 1;
 
 % Actuated cables
 actuated_cable_pair = [ 4  9;  % base deformation cable
@@ -56,9 +57,9 @@ output_results = 0;  % include detailed output of results
 % Plotting format for configurations that meet the tipping condition
 plot_KE = 0;           % include plots of kinetic energy
 plot_initial = 0;      % include plots of initial configurations with final
-style_initial = 'y';   % formats plot style of initial tensegrity
-style_final = 'r';     % formats plot style of final tensegrity
-style_actuated = 'b';  % formats plot style of actuated cables
+color_initial = 'g';   % formats plot color of initial tensegrity
+color_final = 'r';     % formats plot color of final tensegrity
+color_actuated = 'b';  % formats plot color of actuated cables
 labels_on = 1;         % include labels of node, cable, and rod numbers
 
 %% Dynamic relaxation (DR)
@@ -68,8 +69,9 @@ for i = 1:num_actuated_cables-1
     % Form 12-bar for current actuated cables
     curr_actuated_cable_pair = [actuated_cable_pair(1,:);       % base
                                 actuated_cable_pair(i+1,:)];    % secondary
-    [r0, cable_pair, rod_pair, L0_cable, L0_rod, ground_face] = ...
-        formTwelveBarCube(scaling_factor, curr_actuated_cable_pair);
+    [r0, cable_pair, rod_pair, L0_cable, L0_rod] = ...
+        formTwelveBarCube(scaling_factor, ground_face, ...
+        curr_actuated_cable_pair);
     
     % Grab number of unactuated cables
     num_unactuated_cables = size(cable_pair,1) - ...
@@ -82,8 +84,8 @@ for i = 1:num_actuated_cables-1
     
     % Run DR
     [r, v, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
-        cable_pair, rod_pair, rod_radius, m, k_cable, L0_spring, ...
-        k_rod, L0_rod, rest_lengths, sim_steps, del_t);
+        cable_pair, rod_pair, m, k_cable, L0_spring, k_rod, L0_rod, ...
+        rest_lengths, sim_steps, del_t);
     
     % Check for rod intersection and throw warning if found
     % [intersect_found, P_intersect, P_distance] = ...
@@ -116,8 +118,9 @@ for i = 1:num_actuated_cables-1
     % adaptation to other programs.
 
         % Find vector normal to a ground face
-        normal_vec = findAvgNormalVector(r(:,:,end), ground_face(j,:))
-        % Want vector to point down, not up
+        normal_vec = findAvgNormalVector(r(:,:,end), ground_face(j,:));
+        % Want vector to point down, not up (for ground face that's on
+        % bottom)
         if (sign(normal_vec(3)) == 1)
             normal_vec = -normal_vec;
         end
@@ -162,18 +165,21 @@ for i = 1:num_actuated_cables-1
             figure
             plotTensegrity(r_rot, ...
                 cable_pair(1:num_unactuated_cables,:), rod_pair, ...
-                labels_on, style_final)
+                labels_on, color_final)
             hold on
             plotTensegrity(r_rot, curr_actuated_cable_pair, ...
-                rod_pair, 0, style_actuated)
+                rod_pair, 0, color_actuated)
             hold on
             scatter3(COG(1),COG(2),COG(3),'Filled','r')
             title(['Secondary cable: ' num2str(i-1)])
+            hold on
+            plot3([COG(1); COG(1)], [COG(2); COG(2)], [COG(3); ...
+                min(r_rot(:,3))],['--' color_final])
             
             % Initial tensegrity
             if plot_initial == 1
                 hold on
-                plotTensegrity(r0, cable_pair, rod_pair, 0, style_initial)
+                plotTensegrity(r0, cable_pair, rod_pair, 0, color_initial)
             end
             
             % Kinetic energy
