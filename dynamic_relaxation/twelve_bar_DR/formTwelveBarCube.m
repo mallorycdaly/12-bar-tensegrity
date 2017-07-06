@@ -1,5 +1,5 @@
-function [r, cable_pair, rod_pair, L_cable, L_rod, ground_face] = ...
-    formTwelveBarCube(scaling_factor, ground_face, extra_cables)
+function [r, cable_pair, rod_pair, L_cable, L_rod] = ...
+    formTwelveBarCube(extra_cables)
 % This function forms a 12-bar tensegrity cube. Node positions found using
 % a SolidWorks model of the structure. 
 %
@@ -14,65 +14,64 @@ function [r, cable_pair, rod_pair, L_cable, L_rod, ground_face] = ...
 %       cable; the actuated cable pairs are placed at the end
 %   rod_pair: each row defines the node indices corresponding to that rod
 %   L_cable: vector of cable lengths
-%   L_rod: vector of rod lengths
-%   ground_face: each row defines the node indices corresponding to a
-%       ground face
+%   L_rod: vector of rod length
 
 % Rod length = 45 cm
-% n0  = [-20.79 20.79 8.61]*scaling_factor;
-% n1  = [-8.61 -20.79 20.79]*scaling_factor;
-% n2  = [-20.79 20.79 -8.61]*scaling_factor;
-% n3  = [20.79 8.61 -20.79]*scaling_factor;
-% n4  = [-8.61 20.79 -20.79]*scaling_factor;
-% n5  = [-20.79 -20.79 -8.61]*scaling_factor;
-% n6  = [8.61 20.79 -20.79]*scaling_factor;
-% n7  = [20.79 8.61 20.79]*scaling_factor;
-% n8  = [20.79 20.79 -8.61]*scaling_factor;
-% n9  = [8.61 -20.79 -20.79]*scaling_factor;
-% n10 = [20.79 20.79 8.61]*scaling_factor;
-% n11 = [-20.79 8.61 20.79]*scaling_factor;
-% n12 = [8.61 20.79 20.79]*scaling_factor;
-% n13 = [20.79 -20.79 8.61]*scaling_factor;
-% n14 = [-8.61 20.79 20.79]*scaling_factor;
-% n15 = [-20.79 8.61 -20.79]*scaling_factor;
-% n16 = [-20.79 -20.79 8.61]*scaling_factor;
-% n17 = [20.79 -8.61 20.79]*scaling_factor;
-% n18 = [-8.61 -20.79 -20.79]*scaling_factor;
-% n19 = [-20.79 -8.61 20.79]*scaling_factor;
-% n20 = [20.79 -20.79 -8.61]*scaling_factor;
-% n21 = [-20.79 -8.61 -20.79]*scaling_factor;
-% n22 = [8.61 -20.79 20.79]*scaling_factor;
-% n23 = [20.79 -8.61 -20.79]*scaling_factor;
-% r = [n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; n12; n13; n14; ...
-%      n15; n16; n17; n18; n19; n20; n21; n22; n23];
+scaling_factor = 0.1;
+n0  = [-20.79 20.79 8.61]*scaling_factor;
+n1  = [-8.61 -20.79 20.79]*scaling_factor;
+n2  = [-20.79 20.79 -8.61]*scaling_factor;
+n3  = [20.79 8.61 -20.79]*scaling_factor;
+n4  = [-8.61 20.79 -20.79]*scaling_factor;
+n5  = [-20.79 -20.79 -8.61]*scaling_factor;
+n6  = [8.61 20.79 -20.79]*scaling_factor;
+n7  = [20.79 8.61 20.79]*scaling_factor;
+n8  = [20.79 20.79 -8.61]*scaling_factor;
+n9  = [8.61 -20.79 -20.79]*scaling_factor;
+n10 = [20.79 20.79 8.61]*scaling_factor;
+n11 = [-20.79 8.61 20.79]*scaling_factor;
+n12 = [8.61 20.79 20.79]*scaling_factor;
+n13 = [20.79 -20.79 8.61]*scaling_factor;
+n14 = [-8.61 20.79 20.79]*scaling_factor;
+n15 = [-20.79 8.61 -20.79]*scaling_factor;
+n16 = [-20.79 -20.79 8.61]*scaling_factor;
+n17 = [20.79 -8.61 20.79]*scaling_factor;
+n18 = [-8.61 -20.79 -20.79]*scaling_factor;
+n19 = [-20.79 -8.61 20.79]*scaling_factor;
+n20 = [20.79 -20.79 -8.61]*scaling_factor;
+n21 = [-20.79 -8.61 -20.79]*scaling_factor;
+n22 = [8.61 -20.79 20.79]*scaling_factor;
+n23 = [20.79 -8.61 -20.79]*scaling_factor;
+r = [n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; n12; n13; n14; ...
+     n15; n16; n17; n18; n19; n20; n21; n22; n23];
  
 % More spherical cube (triangle segments are larger than connecting
 % segments at ~2:1 ratio)
-r = [...   
-   -1.8027    1.9885    0.4612;
-   -0.4612   -1.9885    1.8027;
-   -1.9885    1.8027   -0.4612;
-    1.9885    0.4612   -1.8027;
-   -0.4612    1.9885   -1.8027;
-   -1.8027   -1.9885   -0.4612;
-    0.4612    1.8027   -1.9885;
-    1.8027    0.4612    1.9885;
-    1.8027    1.9885   -0.4612;
-    0.4612   -1.9885   -1.8027;
-    1.9885    1.8027    0.4612;
-   -1.9885    0.4612    1.8027;
-    0.4612    1.9885    1.8027;
-    1.8027   -1.9885    0.4612;
-   -0.4612    1.8027    1.9885;
-   -1.8027    0.4612   -1.9885;
-   -1.9885   -1.8027    0.4612;
-    1.9885   -0.4612    1.8027;
-   -0.4612   -1.8027   -1.9885;
-   -1.8027   -0.4612    1.9885;
-    1.9885   -1.8027   -0.4612;
-   -1.9885   -0.4612   -1.8027;
-    0.4612   -1.8027    1.9885;
-    1.8027   -0.4612   -1.9885];
+% r = [...   
+%    -1.8027    1.9885    0.4612;
+%    -0.4612   -1.9885    1.8027;
+%    -1.9885    1.8027   -0.4612;
+%     1.9885    0.4612   -1.8027;
+%    -0.4612    1.9885   -1.8027;
+%    -1.8027   -1.9885   -0.4612;
+%     0.4612    1.8027   -1.9885;
+%     1.8027    0.4612    1.9885;
+%     1.8027    1.9885   -0.4612;
+%     0.4612   -1.9885   -1.8027;
+%     1.9885    1.8027    0.4612;
+%    -1.9885    0.4612    1.8027;
+%     0.4612    1.9885    1.8027;
+%     1.8027   -1.9885    0.4612;
+%    -0.4612    1.8027    1.9885;
+%    -1.8027    0.4612   -1.9885;
+%    -1.9885   -1.8027    0.4612;
+%     1.9885   -0.4612    1.8027;
+%    -0.4612   -1.8027   -1.9885;
+%    -1.8027   -0.4612    1.9885;
+%     1.9885   -1.8027   -0.4612;
+%    -1.9885   -0.4612   -1.8027;
+%     0.4612   -1.8027    1.9885;
+%     1.8027   -0.4612   -1.9885];
 
 % Cables by pairs of node indices; add 1 for MATLAB indexing
 lattice_cables = [ 0  2;  %  0

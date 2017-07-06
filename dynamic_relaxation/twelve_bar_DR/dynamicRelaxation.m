@@ -1,6 +1,6 @@
-function [r, v, KE, F_cable, F_rod, F_total, L_rod] = ...
+function [r, v, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
     dynamicRelaxation(r0, cable_pair, rod_pair, m, k_spring, L0_spring, ...
-    k_rod, L0_rod, rest_lengths, sim_steps, del_t)
+    k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, del_t)
 % Runs dynamic relaxation from intial position to final configuration,
 % based on number of simulation steps.
 %
@@ -15,6 +15,7 @@ function [r, v, KE, F_cable, F_rod, F_total, L_rod] = ...
 %   L0_spring: initial length of the springs
 %   k_rod: spring constant of the rods
 %   L0_rod: initial length of the rods
+%   rod_radius: radius of the rods
 %   rest_lengths: lengths of strings in the cable, defined as the cable 
 %       rest lengths, such that spring length can be found as total cable 
 %       length (node-to-node distance) minus rest length
@@ -29,6 +30,7 @@ function [r, v, KE, F_cable, F_rod, F_total, L_rod] = ...
 %   F_rod: 3D array of rod force vectors across simulation steps
 %   F_total: 3D array of total force vectors across simulation steps
 %   L_rod: 3D array of rod lengths across simulation steps
+%   intersect_found: boolean for rod intersection
 
 % Grab number of nodes and rods
 num_nodes = size(r0,1);
@@ -96,3 +98,13 @@ L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
 %     warning(['Total rod forces did not converge to zero with a ' ...
 %         'precision of 6 decimal places'])
 % end
+
+% Check for rod intersection
+% [intersect_found, P_intersect, P_distance] = ...
+intersect_found = checkRodIntersection(r(:,:,end), rod_pair, ...
+    rod_radius);
+%     if intersect_found == 1
+%         fprintf('\n')
+%         warning(['Rod intersection found in final configuration for ' ...
+%             'secondary cable ' num2str(i-1)])
+%     end

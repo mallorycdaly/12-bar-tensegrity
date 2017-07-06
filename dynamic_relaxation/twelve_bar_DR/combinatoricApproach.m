@@ -19,10 +19,14 @@ clear; close all
 % Twelve-bar tensegrity cube geometry
 scaling_factor = 0.1;   % scales node positions
 rod_radius = 0.01;      % used for rod intersection check
-ground_face = [4 6 3 23 9 18 21 15] + 1;
+% ground_face = [4 6 3 23 9 18 21 15] + 1;  % octagon base of cube
+ground_face = [9 20 23] + 1;  % triangle base of cube
+% ground_face = [4 5 6 12 17 11] + 1;  % hexagon base of octahedron
 cross_body_pair = [];
 [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
-    scaling_factor, ground_face, cross_body_pair);
+    cross_body_pair);
+% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+%     cross_body_pair);
 
 % Mass and spring constants
 m = 10;             % mass per node
@@ -31,11 +35,11 @@ k_cable = 200;      % spring constant of the elastic lattice
 L0_spring = 0;      % initial length of the springs
 
 % Percent of length for rest length of actuated cables
-percent_length = 0.05;
+percent_length = 0.2;
 
 % Combinatoric variables
-min_choose_k = 2;   % min number of cables pulled at once
-max_choose_k = 2;   % max number of cables pulled at once
+min_choose_k = 1;   % min number of cables pulled at once
+max_choose_k = 1;   % max number of cables pulled at once
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -70,20 +74,11 @@ for j = 1:size(cable_combos,1)
         L0_cable(cable_combos(j,:));
     
     % Run dynamic relaxation
-    [r, ~, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
-        cable_pair, rod_pair, m, k_cable, L0_spring, k_rod, L0_rod, ...
-        rest_lengths, sim_steps, del_t);
+    [r, ~, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
+        dynamicRelaxation(r0, cable_pair, rod_pair, m, k_cable, ...
+        L0_spring, k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, ...
+        del_t);
 
-%     % Output dynamic relaxation results
-%     if output_results == 1
-%         fprintf('\nForce matrix at end of simulation:\n')
-%         disp(F_total(:,:,end))
-%         fprintf('\nNodal positions at end of simulation:\n')
-%         disp(r(:,:,end))
-%         fprintf('\nRod length percent change:\n')
-%         disp((L_rod(:,:,end)-L_rod(:,:,1))/L0_rod*100)
-%     end
-        
     % Step condition: COG escapes supporting polygon
     distance = -inf;
     edge_closest = -1;
@@ -120,7 +115,7 @@ for j = 1:size(cable_combos,1)
 
         % Find if projection of COG onto the ground plane is inside or 
         % outside the supporting polygon
-        ground_poly = findGroundPoly(r_rot, ground_face);
+        ground_poly = r_rot(ground_face,:);
         escaped_poly = ~inpolygon(COG(1), COG(2), ground_poly(:,1), ...
             ground_poly(:,2));
 
@@ -134,12 +129,20 @@ for j = 1:size(cable_combos,1)
         % Store results
         results.escaped{i}(j,:) = [escaped_poly distance edge_closest];
         results.r{i}(:,:,j) = r(:,:,end);
+        results.F_cable{i}(:,:,j) = F_cable(:,:,end);
+        results.F_rod{i}(:,:,j) = F_rod(:,:,end);
+        results.KE{i}(:,:,j) = KE;
+        results.intersect{i}(j,:) = intersect_found;
         
 end
+
+        % Store cable combos
+        results.cable_combos{i} = cable_combos-1;
 
 end
 
 %% Analyze results
+% TO DO: Make this only plot max distance result
 % Plot results that escaped base polygon
 color = 'r';
 for i = min_choose_k:max_choose_k

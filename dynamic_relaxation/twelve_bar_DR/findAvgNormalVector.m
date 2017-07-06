@@ -1,4 +1,4 @@
-function [normal_vec, COG_plane] = findAvgNormalVector(r,ground_face)
+function [normal_vec, COG_plane] = findAvgNormalVector(r, ground_face)
 % This function finds the unit average normal vector to a polygon that is
 % expected to be non-planar.
 %
@@ -10,11 +10,7 @@ function [normal_vec, COG_plane] = findAvgNormalVector(r,ground_face)
 %   normal_vec = the average normal vector found from the nodes of the
 %       ground face
 
-
-face_nodes = zeros(length(ground_face),3);
-for i = 1:length(ground_face)
-    face_nodes(i,:) = r(ground_face(i),:);
-end
+face_nodes = r(ground_face,:);
 COG_plane = mean(face_nodes,1);
 
 wrapN = @(x,N)(1+mod(x,N));

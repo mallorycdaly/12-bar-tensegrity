@@ -1,4 +1,4 @@
-%% Equilbrium Finder for 12-Bar Tensegrity
+%% 12-Bar Equilbrium Finder
 % This script finds the equilbrium position of a 12-bar tensegrity based
 % on desired rest lengths. Dynamic relaxation is used to iteratively reach
 % the equilbrium configuration from the initial position. This version of
@@ -24,15 +24,15 @@ k_rod = 1000;       % spring constant of the rods
 k_lattice = 200;    % spring constant of the elastic lattice
 L0_spring = 0;      % initial length of the springs
 
-% Form 12-bar
-ground_face = [   4  6  3 23  9 18 21 15] + 1;
+% Stored info
+% 
+% 12-bar cube:
 % ground_face = [ 1 16  5 18  9 20 13 22;
 %                 0  2 15 21  5 16 19 11;
 %                 0  2  4  6  8 10 12 14;
 %                10  8  3 23 20 13 17  7;
 %                14 12  7 17 22  1 19 11;
 %                 4  6  3 23  9 18 21 15] + 1;
-cross_body_pair = [];
 % cross_body_pair = [ 4  9;         % bottom /
 %                     1 12;         % top /
 %                    18 22;         % front /
@@ -45,8 +45,11 @@ cross_body_pair = [];
 %                     0  5;         % left \
 %                     2 10;         % back \
 %                     8 13] + 1;  	% right\
-[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
-    scaling_factor, ground_face, cross_body_pair);
+
+% Form 12-bar
+cross_body_pair = [];
+[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+    cross_body_pair);
 
 % Rest lengths
 % percent_length = rand(size(L0_cable))
@@ -71,9 +74,16 @@ plot_KE = 1;                % plot kinetic energy
 %% Dynamic relaxation (DR)
 
 % Run DR
-[r, v, KE, F_cable, F_rod, F_total, L_rod] = dynamicRelaxation(r0, ...
-    cable_pair, rod_pair, m, k_lattice, L0_spring, k_rod, L0_rod, ...
-    rest_lengths, sim_steps, del_t);
+[r, v, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
+    dynamicRelaxation(r0, cable_pair, rod_pair, m, k_lattice, ...
+    L0_spring, k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, del_t);
+
+% Throw warning if rod intersection was found
+if intersect_found == 1
+    fprintf('\n')
+    warning(['Rod intersection found in final configuration for ' ...
+        'secondary cable ' num2str(i-1)])
+end
 
 % Output results
 fprintf('\nForce matrix at end of simulation:\n')

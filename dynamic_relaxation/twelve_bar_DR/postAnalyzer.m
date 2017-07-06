@@ -59,7 +59,7 @@ for i = 1:length(row)
     scatter3(COG(1),COG(2),COG(3),'Filled',color)
     hold on
     plot3([COG(1); COG(1)], [COG(2); COG(2)], [COG(3); ...
-        min(r(:,3,end))],['--' color])
+        min(r_rot(:,3))],['--' color])
     title(['Cables used: ' num2str(num_comb) ', Combination #: ' num2str(row(i))])
     
 end
