@@ -51,6 +51,7 @@ L0_spring = 0;      % initial length of the springs
 %                     8 13] + 1;  	% right\
 
 % Form 12-bar
+ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
 cross_body_pair = [];
 [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
     cross_body_pair);
@@ -169,7 +170,7 @@ for i = 1:num_polygons
 
     % Find if projection of COG onto the ground plane is inside or outside 
     % the supporting polygon
-    ground_poly = findGroundPoly(r_rot, ground_face(i,:));
+    ground_poly = r_rot(ground_face,:);
     escaped_poly(i) = ~inpolygon(COG(1), COG(2), ground_poly(:,1), ...
         ground_poly(:,2));
 

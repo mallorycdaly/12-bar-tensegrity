@@ -74,8 +74,7 @@ for i = 1:num_actuated_cables-1
     curr_actuated_cable_pair = [actuated_cable_pair(1,:);       % base
                                 actuated_cable_pair(i+1,:)];    % secondary
     [r0, cable_pair, rod_pair, L0_cable, L0_rod] = ...
-        formTwelveBarCube(scaling_factor, ground_face, ...
-        curr_actuated_cable_pair);
+        formTwelveBarCube(curr_actuated_cable_pair);
     
     % Grab number of unactuated cables
     num_unactuated_cables = size(cable_pair,1) - ...
@@ -152,7 +151,7 @@ for i = 1:num_actuated_cables-1
 
         % Find if projection of COG onto the ground plane is inside or 
         % outside the supporting polygon
-        ground_poly = findGroundPoly(r_rot, ground_face(j,:));
+        ground_poly = r_rot(ground_face,:);
         escaped_poly(j) = ~inpolygon(COG(1), COG(2), ground_poly(:,1), ...
             ground_poly(:,2));
 
