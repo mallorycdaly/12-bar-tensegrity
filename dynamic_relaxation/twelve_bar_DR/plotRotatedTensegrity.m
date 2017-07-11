@@ -1,7 +1,6 @@
 function plotRotatedTensegrity(r, cable_pair, rod_pair, ground_face, ...
     num_cables_used, labels_on, cable_format)
-% Plots tensegrity (likely one that has been actuated) so that its ground
-% face is oriented downwards.
+% Plots tensegrity so that the input ground face is facing downwards.
 %
 % The inputs are the following:
 %   r: matrix of x,y,z, position of nodes

@@ -20,16 +20,18 @@
 % Created: June 2017
 % Last Updated: July 2017
 
-clear; close all
+% clear; close all
+clear
 
 %% Design Parameters
 
 % Twelve-bar tensegrity cube geometry
 scaling_factor = 0.1;   % scales node positions
-rod_radius = 0.01;      % used for rod intersection check
-% ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
-ground_face = [9 20 23] + 1;                % triangle base of cube
+rod_radius = 0.05;      % used for rod intersection check
+ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
+% ground_face = [9 20 23] + 1;                % triangle base of cube
 % ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
+% ground_face = [17 12 18 23] + 1;            % square base of octahedron
 cross_body_pair = [];   % node index pairs that define cross-body cables
 [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
     cross_body_pair);
@@ -37,16 +39,16 @@ cross_body_pair = [];   % node index pairs that define cross-body cables
 %     cross_body_pair);
 
 % Mass and spring constants
-m = 1;              % mass per node
-k_rod = 1000;       % spring constant of the rods
-k_cable = 200;      % spring constant of the elastic lattice
+m = 1;              % mass per node (tuned for convergence)
+k_rod = 1000;       % spring constant of the rods (tuned for convergence)
+k_cable = 500;      % spring constant of the elastic lattice (tuned for convergence)
 L0_spring = 0;      % initial length of the springs
 
 % Percent of initial cable length for rest length of actuated cables
-percent_length = 0.05;
+percent_length = 0.20;
 
 % Number of actuated cables
-num_act_cables = 1;
+num_act_cables = 3;
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -191,7 +193,7 @@ for i = 1:length(max_idx)
             hold on
             act_cable_pair = cable_pair(curr_cable_combo(j),:);
             plotTensegrity(results.r_rot(:,:,max_idx(i)), ...
-                act_cable_pair, rod_pair, labels_on, color_actuated)
+                act_cable_pair, rod_pair, 0, color_actuated)
         end
         title('Final Configuration')
         xlabel('x')
@@ -210,6 +212,9 @@ for i = 1:length(max_idx)
         
         % Output results
         if output_results == 1
+            
+            fprintf(['\n-----------------------------------------------'...
+                '------------------'])
 
             fprintf(['\n\nCOG escapes from this edge by a distance of ' ...
                 '%.2f using the following actuated cable(s):\n'], ...
@@ -225,7 +230,7 @@ for i = 1:length(max_idx)
             
             if results.intersect(max_idx(i)) == 1
                 fprintf(['\nHowever, an intersection was found on this' ...
-                    'edge.\n'])
+                    ' edge.\n'])
             end
         end
         
