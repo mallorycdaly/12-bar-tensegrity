@@ -57,9 +57,9 @@ cross_body_pair = [];
     cross_body_pair);
 
 % Rest lengths
-% percent_length = rand(size(L0_cable))
-% rest_lengths = percent_length.*L0_cable;
-rest_lengths = 0.95*L0_cable;
+percent_length = rand(size(L0_cable))
+rest_lengths = percent_length.*L0_cable;
+% rest_lengths = 0.2*L0_cable;
 % rest_lengths([1 12 35 36 28 16 20 24 32 7 11 33]) = 0.3*L0_cable([1 12 35
 % 36 28 16 20 24 32 7 11 33]);  % make triangles larger
 % rest_lengths(end) = 0.2*L0_cable(end);  % actuate last segment
@@ -73,7 +73,7 @@ color_initial = 'b';        % formats color of initial tensegrity plot
 color_final = 'r';          % formats color of final tensegrity plot
 color_actuated = 'k';       % formats color of actuated cables
 labels_on = 0;              % add labels of node, cable, and rod numbers
-plot_initial = 0;           % plot initial configuration with final
+plot_initial = 1;           % plot initial configuration with final
 plot_KE = 1;                % plot kinetic energy
 
 %% Dynamic relaxation (DR)

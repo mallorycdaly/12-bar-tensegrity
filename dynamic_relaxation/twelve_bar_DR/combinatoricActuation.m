@@ -45,7 +45,7 @@ k_cable = 500;      % spring constant of the elastic lattice (tuned for converge
 L0_spring = 0;      % initial length of the springs
 
 % Percent of initial cable length for rest length of actuated cables
-percent_length = 0.20;
+percent_length = 0.05;
 
 % Number of actuated cables
 num_act_cables = 3;
@@ -72,11 +72,14 @@ num_cables = size(cable_pair,1);
 cable_combos = combnk(1:num_cables,num_act_cables);
 num_combos = size(cable_combos,1);
 num_rods = size(rod_pair,1);
+num_nodes = size(r0,1);
 
 % Initialize results storage
-results.escaped = zeros(num_combos,1);
-results.edge_distance = zeros(num_combos,1);
+results.cable_combos = cable_combos-1;
 results.edge_closest = zeros(num_combos,1);
+results.edge_distance = zeros(num_combos,1);
+results.ground_face = ground_face-1;
+results.escaped = zeros(num_combos,1);
 results.intersect = zeros(num_combos,1);
 results.r = zeros([size(r0) num_combos]);           % 3D array
 results.r_rot = zeros([size(r0) num_combos]);       % 3D array
@@ -144,9 +147,9 @@ for i = 1:size(cable_combos,1)
         end
         
         % Store results
-        results.escaped(i) = escaped_poly;
-        results.edge_distance(i) = distance;
         results.edge_closest(i) = edge_closest;
+        results.edge_distance(i) = distance;
+        results.escaped(i) = escaped_poly;
         results.intersect(i) = intersect_found;
         results.r(:,:,i) = r(:,:,end);
         results.r_rot(:,:,i) = r_rot;
@@ -157,12 +160,10 @@ for i = 1:size(cable_combos,1)
         
 end
 
-% Store cable combos
-results.cable_combos = cable_combos-1;
-results.ground_face = ground_face-1;
-
 %% Analyze results
 % Goal to find cable combinations to move over each edge of the supporting
+% polygon. This section outputs those cable combinations that resulted in
+% the most displacement of the COG from each edge of the supporting
 % polygon.
 
 % Find indices corresponding to max distance from each edge
