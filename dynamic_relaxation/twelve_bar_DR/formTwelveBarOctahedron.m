@@ -16,33 +16,61 @@ function [r, cable_pair, rod_pair, L_cable, L_rod] = ...
 %   L_rod: vector of rod length
 
 % Rod length = 45 cm
-scaling_factor = 0.1;
-n0 = [0 0 0]*scaling_factor;
-n1 = [5.4 3.5 18.4]*scaling_factor;
-n2 = [23.2 0 13.8]*scaling_factor;
-n3 = [34.9 3.5 0]*scaling_factor;
-n4 = [23.2 0 -13.8]*scaling_factor;
-n5 = [5.4 3.5 -18.4]*scaling_factor;
-n6 = [-6.2 18 -18.1]*scaling_factor;
-n7 = [-12.2 14 0]*scaling_factor;
-n8 = [9.7 18 27]*scaling_factor;
-n9 = [27.2 14 23.8]*scaling_factor;
-n10 = [41.8 18 -8.5]*scaling_factor;
-n11 = [28.9 14 -22.5]*scaling_factor;
-n12 = [6.8 27 -24.6]*scaling_factor;
-n13 = [-12.4 31 2.5]*scaling_factor;
-n14 = [-4 27 18.2]*scaling_factor;
-n15 = [29.5 31 21.3]*scaling_factor;
-n16 = [39.5 27 4.6]*scaling_factor;
-n17 = [26 31 -24.3]*scaling_factor;
-n18 = [0 41.5 -15.5]*scaling_factor;
-n19 = [0 45 0]*scaling_factor;
-n20 = [3.6 41.5 20.1]*scaling_factor;
-n21 = [23.2 45 13.8]*scaling_factor;
-n22 = [36.5 41.5 0]*scaling_factor;
-n23 = [23.2 45 -13.8]*scaling_factor;
-r = [n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; n12; n13; n14; ...
-     n15; n16; n17; n18; n19; n20; n21; n22; n23];
+% scaling_factor = 0.1;
+% n0 = [0 0 0]*scaling_factor;
+% n1 = [5.4 3.5 18.4]*scaling_factor;
+% n2 = [23.2 0 13.8]*scaling_factor;
+% n3 = [34.9 3.5 0]*scaling_factor;
+% n4 = [23.2 0 -13.8]*scaling_factor;
+% n5 = [5.4 3.5 -18.4]*scaling_factor;
+% n6 = [-6.2 18 -18.1]*scaling_factor;
+% n7 = [-12.2 14 0]*scaling_factor;
+% n8 = [9.7 18 27]*scaling_factor;
+% n9 = [27.2 14 23.8]*scaling_factor;
+% n10 = [41.8 18 -8.5]*scaling_factor;
+% n11 = [28.9 14 -22.5]*scaling_factor;
+% n12 = [6.8 27 -24.6]*scaling_factor;
+% n13 = [-12.4 31 2.5]*scaling_factor;
+% n14 = [-4 27 18.2]*scaling_factor;
+% n15 = [29.5 31 21.3]*scaling_factor;
+% n16 = [39.5 27 4.6]*scaling_factor;
+% n17 = [26 31 -24.3]*scaling_factor;
+% n18 = [0 41.5 -15.5]*scaling_factor;
+% n19 = [0 45 0]*scaling_factor;
+% n20 = [3.6 41.5 20.1]*scaling_factor;
+% n21 = [23.2 45 13.8]*scaling_factor;
+% n22 = [36.5 41.5 0]*scaling_factor;
+% n23 = [23.2 45 -13.8]*scaling_factor;
+% r = [n0; n1; n2; n3; n4; n5; n6; n7; n8; n9; n10; n11; n12; n13; n14; ...
+%      n15; n16; n17; n18; n19; n20; n21; n22; n23];
+
+% Positions found using equilbrium finder with rest length at 95%. All rods
+% are the same length (4.4919) whereas original coordinates do not have
+% equal rod lengths.
+r = [   -0.0340   -0.0465   -0.0385
+    0.4888    0.3884    1.6978
+    2.2157    0.0640    1.3545
+    3.3545    0.4468    0.0622
+    2.2954    0.0450   -1.2907
+    0.5913    0.3533   -1.7483
+   -0.5061    1.7477   -1.8316
+   -1.1171    1.3607   -0.1155
+    0.9663    1.7678    2.4994
+    2.6546    1.4903    2.1578
+    3.9612    1.8658   -0.7394
+    2.7688    1.4302   -2.0994
+    0.6576    2.7199   -2.4475
+   -1.1462    2.9616    0.2684
+   -0.3156    2.7835    1.7943
+    2.9771    3.1201    2.0569
+    4.0155    2.7738    0.5031
+    2.4838    3.0668   -2.1910
+    0.1284    4.0174   -1.3779
+   -0.1373    4.4432    0.0602
+    0.6272    4.0484    1.8440
+    2.5091    4.5444    1.3961
+    3.5691    4.0717   -0.0608
+    2.3120    4.5354   -1.3542];
 
 % Cables by pairs of node indices; add 1 for MATLAB indexing
 lattice_cables = [ 0  1;  %  0

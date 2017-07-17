@@ -23,10 +23,10 @@ rod_radius = 0.01;      % used for rod intersection check
 scaling_factor = 0.1;   % scales node positions
 
 % Mass and spring constants
-m = 10;             % mass per node
-k_rod = 1000;       % spring constant of the rods
-k_lattice = 200;    % spring constant of the elastic lattice
-L0_spring = 0;      % initial length of the springs
+m = 10;         % mass per node
+k_rod = 1000;   % spring constant of the rods
+k_cable = 500;  % spring constant of the cables
+L0_spring = 0;  % initial length of the springs
 
 % Stored info
 % 
@@ -51,15 +51,20 @@ L0_spring = 0;      % initial length of the springs
 %                     8 13] + 1;  	% right\
 
 % Form 12-bar
-ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
+% ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
+% ground_face = [9 20 23] + 1;                % triangle base of cube
+ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
+% ground_face = [17 12 18 23] + 1;            % square base of octahedron
 cross_body_pair = [];
+% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
+%     cross_body_pair);
 [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
     cross_body_pair);
 
 % Rest lengths
-percent_length = rand(size(L0_cable))
-rest_lengths = percent_length.*L0_cable;
-% rest_lengths = 0.2*L0_cable;
+% percent_length = rand(size(L0_cable))
+% rest_lengths = percent_length.*L0_cable;
+rest_lengths = 0.95*L0_cable;
 % rest_lengths([1 12 35 36 28 16 20 24 32 7 11 33]) = 0.3*L0_cable([1 12 35
 % 36 28 16 20 24 32 7 11 33]);  % make triangles larger
 % rest_lengths(end) = 0.2*L0_cable(end);  % actuate last segment
@@ -80,7 +85,7 @@ plot_KE = 1;                % plot kinetic energy
 
 % Run DR
 [r, v, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
-    dynamicRelaxation(r0, cable_pair, rod_pair, m, k_lattice, ...
+    dynamicRelaxation(r0, cable_pair, rod_pair, m, k_cable, ...
     L0_spring, k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, del_t);
 
 % Throw warning if rod intersection was found

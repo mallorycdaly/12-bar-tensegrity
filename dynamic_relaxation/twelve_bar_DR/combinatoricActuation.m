@@ -28,27 +28,27 @@ clear
 % Twelve-bar tensegrity cube geometry
 scaling_factor = 0.1;   % scales node positions
 rod_radius = 0.05;      % used for rod intersection check
-ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
+% ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
 % ground_face = [9 20 23] + 1;                % triangle base of cube
-% ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
+ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
 % ground_face = [17 12 18 23] + 1;            % square base of octahedron
 cross_body_pair = [];   % node index pairs that define cross-body cables
-[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
-    cross_body_pair);
-% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
 %     cross_body_pair);
+[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+    cross_body_pair);
 
 % Mass and spring constants
 m = 1;              % mass per node (tuned for convergence)
 k_rod = 1000;       % spring constant of the rods (tuned for convergence)
 k_cable = 500;      % spring constant of the elastic lattice (tuned for convergence)
-L0_spring = 0;      % initial length of the springs
+L0_spring = 0;      % initial length of the springs (careful: no checks if L0_spring is too long)
 
 % Percent of initial cable length for rest length of actuated cables
 percent_length = 0.05;
 
 % Number of actuated cables
-num_act_cables = 3;
+num_act_cables = 2;
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -63,7 +63,7 @@ labels_on = 1;         % include labels of node, cable, and rod numbers
 color_initial = 'g';   % formats plot color of initial tensegrity
 color_final = 'r';     % formats plot color of final tensegrity
 color_actuated = 'b';  % formats plot color of actuated cables
-plot_KE = 1;           % include plots of kinetic energy
+plot_KE = 0;           % include plots of kinetic energy
 
 %% Dynamic relaxation (DR)
 
