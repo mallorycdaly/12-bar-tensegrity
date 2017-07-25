@@ -1,6 +1,7 @@
-function [r, v, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
-    dynamicRelaxation(r0, cable_pair, rod_pair, m, k_spring, L0_spring, ...
-    k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, del_t)
+function [r, v, KE, F_cable, F_rod, F_total, L_cable, L_rod, ...
+    intersect_found] = dynamicRelaxation(r0, cable_pair, rod_pair, m, ...
+    k_spring, L0_spring, k_rod, L0_rod, rod_radius, rest_lengths, ...
+    sim_steps, del_t)
 % Runs dynamic relaxation from intial position to final configuration,
 % based on number of simulation steps.
 %
@@ -29,32 +30,36 @@ function [r, v, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
 %   F_cable: 3D array of cable force vectors across simulation steps
 %   F_rod: 3D array of rod force vectors across simulation steps
 %   F_total: 3D array of total force vectors across simulation steps
+%   L_cable: 3D array of cable lengths
 %   L_rod: 3D array of rod lengths across simulation steps
 %   intersect_found: boolean for rod intersection
 
-% Grab number of nodes and rods
+% Grab number of nodes, cables, and rods
 num_nodes = size(r0,1);
+num_cables = size(cable_pair,1);
 num_rods = size(rod_pair,1);
 
 % Initialize variables
 % Note: All variables except velocity are incremented by del_t starting
 % from t = 0 (index 1 in MATLAB). Velocity is incremented by del_t starting
 % from t = -del_t/2 (index 1).
-r = zeros(num_nodes,3,sim_steps+1);      % nodal positions
-r(:,:,1) = r0;                           % initial nodal positions known
-v = zeros(num_nodes,3,sim_steps+1);      % nodal velocities
-KE = zeros(sim_steps,1);                 % kinetic energy
-F_cable = zeros(num_nodes,3,sim_steps);  % cable force at nodes
-F_rod = zeros(num_nodes,3,sim_steps);    % rod force at nodes
-F_total = zeros(num_nodes,3,sim_steps);  % total force at nodes
-L_rod = zeros(num_rods,1,sim_steps+1);   % rod length
+r = zeros(num_nodes,3,sim_steps+1);         % nodal positions
+r(:,:,1) = r0;                              % initial nodal positions known
+v = zeros(num_nodes,3,sim_steps+1);         % nodal velocities
+KE = zeros(sim_steps,1);                    % kinetic energy
+F_cable = zeros(num_nodes,3,sim_steps);     % cable force at nodes
+F_rod = zeros(num_nodes,3,sim_steps);       % rod force at nodes
+F_total = zeros(num_nodes,3,sim_steps);     % total force at nodes
+L_cable = zeros(num_cables,1,sim_steps);    % cable lengths
+L_rod = zeros(num_rods,1,sim_steps);        % rod lengths
 
 % Run dynamic relaxation
 for i = 1:sim_steps
 
     % Find forces acting on each node
-    F_cable(:,:,i) = findCableForce(r(:,:,i), cable_pair, num_nodes, ...
-        k_spring, L0_spring, rest_lengths);
+    [F_cable(:,:,i),L_cable(:,:,i)] = findCableForce(r(:,:,i), ...
+        cable_pair, num_nodes, num_cables, k_spring, L0_spring, ...
+        rest_lengths);
     [F_rod(:,:,i),L_rod(:,:,i)] = findRodForce(r(:,:,i), rod_pair, ...
         num_nodes, num_rods, k_rod, L0_rod);
     F_total(:,:,i) = F_cable(:,:,i) + F_rod(:,:,i);
@@ -87,10 +92,6 @@ for i = 1:sim_steps
     r(:,:,i+1) = r(:,:,i) + v(:,:,i+1)*del_t;
     
 end
-
-% Store updated rod length
-L_rod(:,:,end) = norm(r(rod_pair(1,1),:,end) - ...
-    r(rod_pair(1,2),:,end));
 
 % % Check that forces converged to near zero and throw warning if not
 % F_total_rounded = round(F_total(:,:,end),6);

@@ -25,10 +25,12 @@ for i = 1:num_nodes
     end
 end 
 axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
+xlabel('x (cm)')
+ylabel('y (cm)')
+zlabel('z (cm)')
 view(45,15)
+% set(gca,'FontSize',16)
+grid on
 
 % Plot cables
 for i = 1:num_cables

@@ -27,20 +27,20 @@ clear
 
 % Twelve-bar tensegrity cube geometry
 scaling_factor = 0.1;   % scales node positions
-rod_radius = 0.05;      % used for rod intersection check
+rod_radius = 0.05;      % used for rod intersection check, approximately 3/16 in.
 % ground_face = [4 6 3 23 9 18 21 15] + 1;    % octagon base of cube
-% ground_face = [9 20 23] + 1;                % triangle base of cube
-ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
+ground_face = [9 20 23] + 1;                % triangle base of cube
+% ground_face = [4 5 6 12 17 11] + 1;         % hexagon base of octahedron
 % ground_face = [17 12 18 23] + 1;            % square base of octahedron
 cross_body_pair = [];   % node index pairs that define cross-body cables
-% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
-%     cross_body_pair);
-[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+[r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarCube(...
     cross_body_pair);
+% [r0, cable_pair, rod_pair, L0_cable, L0_rod] = formTwelveBarOctahedron(...
+%     cross_body_pair);
 
 % Mass and spring constants
 m = 1;              % mass per node (tuned for convergence)
-k_rod = 1000;       % spring constant of the rods (tuned for convergence)
+k_rod = 4000;       % spring constant of the rods (tuned for convergence)
 k_cable = 500;      % spring constant of the elastic lattice (tuned for convergence)
 L0_spring = 0;      % initial length of the springs (careful: no checks if L0_spring is too long)
 
@@ -48,7 +48,7 @@ L0_spring = 0;      % initial length of the springs (careful: no checks if L0_sp
 percent_length = 0.05;
 
 % Number of actuated cables
-num_act_cables = 2;
+num_act_cables = 1;
 
 % Simulation variables
 sim_steps = 1e3;    % length of simulation
@@ -63,7 +63,7 @@ labels_on = 1;         % include labels of node, cable, and rod numbers
 color_initial = 'g';   % formats plot color of initial tensegrity
 color_final = 'r';     % formats plot color of final tensegrity
 color_actuated = 'b';  % formats plot color of actuated cables
-plot_KE = 0;           % include plots of kinetic energy
+plot_KE = 1;           % include plots of kinetic energy
 
 %% Dynamic relaxation (DR)
 
@@ -97,7 +97,7 @@ for i = 1:size(cable_combos,1)
         L0_cable(cable_combos(i,:));
     
     % Run dynamic relaxation
-    [r, ~, KE, F_cable, F_rod, F_total, L_rod, intersect_found] = ...
+    [r, ~, KE, F_cable, F_rod, ~, L_cable, L_rod, intersect_found] = ...
         dynamicRelaxation(r0, cable_pair, rod_pair, m, k_cable, ...
         L0_spring, k_rod, L0_rod, rod_radius, rest_lengths, sim_steps, ...
         del_t);
@@ -156,6 +156,7 @@ for i = 1:size(cable_combos,1)
         results.F_cable(:,:,i) = F_cable(:,:,end);
         results.F_rod(:,:,i) = F_rod(:,:,end);
         results.KE(:,:,i) = KE;
+        results.L_cable(:,:,i) = L_cable(:,:,end);
         results.L_rod(:,:,i) = L_rod(:,:,end);
         
 end
@@ -165,6 +166,7 @@ end
 % polygon. This section outputs those cable combinations that resulted in
 % the most displacement of the COG from each edge of the supporting
 % polygon.
+close all
 
 % Find indices corresponding to max distance from each edge
 max_idx = findMaxIdxEachEdge(results);
@@ -173,41 +175,44 @@ max_idx = findMaxIdxEachEdge(results);
 for i = 1:length(max_idx)
     if max_idx(i) ~= 0
         
-        % Final tensegrity
+        % Final tensegrity (convert to cm)
         figure
-        plotTensegrity(results.r_rot(:,:,max_idx(i)), cable_pair, ...
+        plotTensegrity(results.r_rot(:,:,max_idx(i))*10, cable_pair, ...
             rod_pair, labels_on, color_final)
-        addForceToPlot(results.r_rot(:,:,max_idx(i)), ...
-            results.F_rod(:,:,max_idx(i)) + ...
-            results.F_cable(:,:,max_idx(i)),'g')  % plot total forces
+%         addForceToPlot(results.r_rot(:,:,max_idx(i)), ...
+%             results.F_rod(:,:,max_idx(i)) + ...
+%             results.F_cable(:,:,max_idx(i)),'g')  % plot total forces
         % Add COG
-        COG = mean(results.r_rot(:,:,max_idx(i)),1);
+        COG = mean(results.r_rot(:,:,max_idx(i)),1)*10;
         hold on
         scatter3(COG(1),COG(2),COG(3),'Filled',color_final)
         % Add COG's projection to ground
         hold on
         plot3([COG(1); COG(1)], [COG(2); COG(2)], [COG(3); ...
-            min(results.r_rot(:,3,max_idx(i)))],['--' color_final])
+            min(results.r_rot(:,3,max_idx(i)))*10],['--' color_final])
         % Highlight actuated cable(s)
         curr_cable_combo = results.cable_combos(max_idx(i),:) + 1;
         for j = 1:length(curr_cable_combo)
             hold on
             act_cable_pair = cable_pair(curr_cable_combo(j),:);
-            plotTensegrity(results.r_rot(:,:,max_idx(i)), ...
+            plotTensegrity(results.r_rot(:,:,max_idx(i))*10, ...
                 act_cable_pair, rod_pair, 0, color_actuated)
         end
-        title('Final Configuration')
-        xlabel('x')
-        ylabel('y')
-        zlabel('z')
+        xlabel('x (cm)')
+        ylabel('y (cm)')
+        zlabel('z (cm)')
+%         set(gca,'fontsize',12)
+        grid on
         
         % Kinetic energy
         if plot_KE == 1
             figure
             curr_KE = results.KE(:,:,max_idx(i));
-            plot(0:sim_steps-1,curr_KE/max(curr_KE),'LineWidth',1.5);
+%             plot(0:sim_steps-1,curr_KE/max(curr_KE),'LineWidth',1.5);
+            plot(0:300-1,curr_KE(1:300)/max(curr_KE),'LineWidth',1.25);
             xlabel('Time step')
             ylabel('Normalized kinetic energy')
+%             set(gca,'fontsize',12)
             grid on
         end
         
@@ -216,25 +221,28 @@ for i = 1:length(max_idx)
             
             fprintf(['\n-----------------------------------------------'...
                 '------------------'])
-
-            fprintf(['\n\nCOG escapes from this edge by a distance of ' ...
-                '%.2f using the following actuated cable(s):\n'], ...
-                results.edge_distance(max_idx(i)))
+            
+            fprintf('\nActuated cable(s):\n')
             disp(results.cable_combos(max_idx(i),:))
             
-            fprintf('\nForce matrix at end of simulation:\n')
-            disp(results.F_rod(:,:,max_idx(i)) + ...
-                results.F_cable(:,:,max_idx(i)))
+            fprintf('\nDistance COG escaped (cm):\n')
+            disp(results.edge_distance(max_idx(i))*10)
 
-            fprintf('\nRod length percent change:\n')
-            disp((results.L_rod(:,:,max_idx(i))-L0_rod)/L0_rod*100)
+            fprintf('\nMaximum final total force (N):\n')
+            disp(max(max((results.F_rod(:,:,max_idx(i)) + ...
+                results.F_cable(:,:,max_idx(i)))))/10)
+            
+            fprintf('\nFinal KE (J):\n')
+            disp(curr_KE(end)/100)
+            
+            fprintf('\nMaximum rod length percent change:\n')
+            disp(min((results.L_rod(:,:,max_idx(i))-L0_rod)/L0_rod*100))
             
             if results.intersect(max_idx(i)) == 1
-                fprintf(['\nHowever, an intersection was found on this' ...
-                    ' edge.\n'])
+                fprintf('\nWarning: intersection found on this edge.\n')
             end
+            
         end
         
     end
 end
-
