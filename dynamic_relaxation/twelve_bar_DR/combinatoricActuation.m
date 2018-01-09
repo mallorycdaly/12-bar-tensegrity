@@ -170,6 +170,7 @@ close all
 
 % Find indices corresponding to max distance from each edge
 max_idx = findMaxIdxEachEdge(results);
+% all_idx = find(results.escaped);
 
 % Plot results
 for i = 1:length(max_idx)
@@ -237,6 +238,9 @@ for i = 1:length(max_idx)
             
             fprintf('\nMaximum rod length percent change:\n')
             disp(min((results.L_rod(:,:,max_idx(i))-L0_rod)/L0_rod*100))
+            
+            fprintf('\nFinal cable lengths (cm):\n')
+            disp(results.L_cable(:,:,max_idx(i))*10);
             
             if results.intersect(max_idx(i)) == 1
                 fprintf('\nWarning: intersection found on this edge.\n')

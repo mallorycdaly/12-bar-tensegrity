@@ -51,7 +51,8 @@ for i = 1:num_rods
     bar_x = [r(rod_pair(i,1),1); r(rod_pair(i,2),1)];
     bar_y = [r(rod_pair(i,1),2); r(rod_pair(i,2),2)];
     bar_z = [r(rod_pair(i,1),3); r(rod_pair(i,2),3)];
-    plot3(bar_x,bar_y,bar_z,'k','LineWidth',2.5)
+    plot3(bar_x,bar_y,bar_z,'Color',[0.7 0.7 0.7],'LineWidth',2.5)
+%     plot3(bar_x,bar_y,bar_z,'k','LineWidth',2.5)
     if labels_on == 1
         text(sum(bar_x)/2,sum(bar_y)/2,sum(bar_z)/2,...
             ['  ' num2str(i+9-1) '  '])
